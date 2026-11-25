@@ -8,6 +8,7 @@ Tout ce dont la Play Console a besoin est dans ce dossier.
 | Titre, description courte et longue (FR / EN) | `listing/fr-FR/`, `listing/en-US/` |
 | Politique de confidentialité | https://ahmedibnbattuta.github.io/neige-alpes-pyrenees/privacy.html |
 | Icône 512 × 512 | `graphics/icon-512.png` |
+| Image de présentation 1024 × 500 | `graphics/feature-1024x500.png` |
 | Formulaire « Sécurité des données » | ci-dessous |
 
 ## Étapes
