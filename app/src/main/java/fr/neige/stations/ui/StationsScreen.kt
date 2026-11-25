@@ -42,18 +42,43 @@ import androidx.compose.ui.unit.sp
 import fr.neige.stations.data.LevelData
 import fr.neige.stations.data.SnowReport
 import fr.neige.stations.data.Station
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import fr.neige.stations.data.OfficialReading
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
 private val DATA_DATE_FORMAT: DateTimeFormatter =
     DateTimeFormatter.ofPattern("EEEE d MMMM yyyy 'à' HH'h'mm", Locale.FRENCH)
+private val READING_DATE_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StationsScreen(vm: StationsViewModel) {
     val state by vm.state.collectAsState()
     val stations = state.visible
+    var editing by remember { mutableStateOf<OfficialReading?>(null) }
+
+    editing?.let { r ->
+        ReadingDialog(
+            initial = r,
+            isNew = state.readings.none { it.id == r.id },
+            onSave = { vm.saveReading(it); editing = null },
+            onDelete = { vm.deleteReading(r.id); editing = null },
+            onDismiss = { editing = null },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -127,6 +152,13 @@ fun StationsScreen(vm: StationsViewModel) {
                         report = state.reports[s.id],
                         favorite = s.id in state.favorites,
                         onFavorite = { vm.toggleFavorite(s.id) },
+                        readings = state.readingsFor(s.id),
+                        onEditReading = { editing = it },
+                        onAddReading = {
+                            editing = OfficialReading(
+                                stationId = s.id, label = "", altitude = null, snowCm = 0, date = LocalDate.now(),
+                            )
+                        },
                     )
                 }
                 item {
@@ -153,7 +185,15 @@ private fun ChipRow(content: @Composable androidx.compose.foundation.layout.RowS
 }
 
 @Composable
-private fun StationCard(station: Station, report: SnowReport?, favorite: Boolean, onFavorite: () -> Unit) {
+private fun StationCard(
+    station: Station,
+    report: SnowReport?,
+    favorite: Boolean,
+    onFavorite: () -> Unit,
+    readings: List<OfficialReading>,
+    onEditReading: (OfficialReading) -> Unit,
+    onAddReading: () -> Unit,
+) {
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -193,8 +233,106 @@ private fun StationCard(station: Station, report: SnowReport?, favorite: Boolean
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
+
+            HorizontalDivider(Modifier.padding(top = 12.dp, bottom = 4.dp))
+            if (readings.isNotEmpty()) {
+                Text("Relevés officiels de la station", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 4.dp))
+                readings.sortedBy { it.altitude ?: 0 }.forEach { r -> ReadingRow(r) { onEditReading(r) } }
+            }
+            TextButton(onClick = onAddReading, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Text("Ajouter un relevé officiel", modifier = Modifier.padding(start = 6.dp))
+            }
         }
     }
+}
+
+@Composable
+private fun ReadingRow(r: OfficialReading, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(r.label + (r.altitude?.let { " · $it m" } ?: ""), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "Relevé du " + r.date.format(READING_DATE_FORMAT),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text("${r.snowCm} cm", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+        Icon(
+            Icons.Default.Edit, contentDescription = "Modifier",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+@Composable
+private fun ReadingDialog(
+    initial: OfficialReading,
+    isNew: Boolean,
+    onSave: (OfficialReading) -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var label by remember { mutableStateOf(initial.label) }
+    var altitude by remember { mutableStateOf(initial.altitude?.toString() ?: "") }
+    var snow by remember { mutableStateOf(if (isNew) "" else initial.snowCm.toString()) }
+    val snowValue = snow.toIntOrNull()
+    val valid = label.isNotBlank() && snowValue != null && snowValue >= 0 &&
+        (altitude.isBlank() || altitude.toIntOrNull() != null)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (isNew) "Nouveau relevé officiel" else "Modifier le relevé") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = label, onValueChange = { label = it },
+                    label = { Text("Point de mesure (ex. Tignes 2100)") }, singleLine = true,
+                )
+                OutlinedTextField(
+                    value = altitude, onValueChange = { altitude = it.filter(Char::isDigit) },
+                    label = { Text("Altitude en m (facultatif)") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+                OutlinedTextField(
+                    value = snow, onValueChange = { snow = it.filter(Char::isDigit) },
+                    label = { Text("Hauteur de neige en cm") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+                Text(
+                    "Le relevé sera daté d'aujourd'hui (" + LocalDate.now().format(READING_DATE_FORMAT) + ").",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = valid,
+                onClick = {
+                    onSave(
+                        initial.copy(
+                            label = label.trim(),
+                            altitude = altitude.toIntOrNull(),
+                            snowCm = snowValue ?: 0,
+                            date = LocalDate.now(),
+                        )
+                    )
+                },
+            ) { Text("Enregistrer") }
+        },
+        dismissButton = {
+            Row {
+                if (!isNew) TextButton(onClick = onDelete) { Text("Supprimer", color = MaterialTheme.colorScheme.error) }
+                TextButton(onClick = onDismiss) { Text("Annuler") }
+            }
+        },
+    )
 }
 
 @Composable

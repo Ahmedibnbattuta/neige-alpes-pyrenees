@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.neige.stations.data.OfficialReading
+import fr.neige.stations.data.OfficialReadingsStore
 import fr.neige.stations.data.Range
 import fr.neige.stations.data.STATIONS
 import fr.neige.stations.data.SnowApi
@@ -31,7 +33,10 @@ data class UiState(
     val loading: Boolean = false,
     val error: String? = null,
     val updatedAt: String? = null,
+    val readings: List<OfficialReading> = emptyList(),
 ) {
+    fun readingsFor(stationId: String) = readings.filter { it.stationId == stationId }
+
     val visible: List<Station>
         get() {
             val q = query.normalized()
@@ -61,8 +66,12 @@ private fun String.normalized(): String =
 class StationsViewModel(app: Application) : AndroidViewModel(app) {
 
     private val prefs = app.getSharedPreferences("neige", Context.MODE_PRIVATE)
+    private val readingsStore = OfficialReadingsStore(prefs)
     private val _state = MutableStateFlow(
-        UiState(favorites = prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet())
+        UiState(
+            favorites = prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet(),
+            readings = readingsStore.load(),
+        )
     )
     val state: StateFlow<UiState> = _state.asStateFlow()
 
@@ -77,6 +86,24 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
             val fav = if (id in it.favorites) it.favorites - id else it.favorites + id
             prefs.edit().putStringSet("favorites", fav).apply()
             it.copy(favorites = fav)
+        }
+    }
+
+    /** Ajoute ou remplace (même id) un relevé officiel. */
+    fun saveReading(r: OfficialReading) {
+        _state.update {
+            val list = if (it.readings.any { x -> x.id == r.id }) it.readings.map { x -> if (x.id == r.id) r else x }
+            else it.readings + r
+            readingsStore.save(list)
+            it.copy(readings = list)
+        }
+    }
+
+    fun deleteReading(id: String) {
+        _state.update {
+            val list = it.readings.filterNot { x -> x.id == id }
+            readingsStore.save(list)
+            it.copy(readings = list)
         }
     }
 
