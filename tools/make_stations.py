@@ -1,6 +1,8 @@
 import json, sys
 # (id, name, country, range, massif, lat, lon, base, top, verified)
 # verified=True : altitudes bas/haut reprises de skiresort.info (ou Wikipédia pour Gstaad)
+# Pour les grands domaines, « bas » = altitude du village de la station (comme dans les bulletins officiels),
+# et non le point le plus bas du domaine relié : verified=False.
 # verified=False : altitude estimée (station faisant partie d'un grand domaine ou absente de la source)
 A,P="ALPES","PYRENEES"
 S=[
@@ -8,7 +10,7 @@ S=[
 ("chamonix","Chamonix – Grands Montets","FR",A,"Mont-Blanc",45.9800,6.9270,1252,2765,True),
 ("brevent","Chamonix – Brévent/Flégère","FR",A,"Mont-Blanc",45.9290,6.8600,1030,2525,True),
 ("contamines","Les Contamines","FR",A,"Mont-Blanc",45.8214,6.7272,1164,2437,True),
-("megeve","Megève / Saint-Gervais","FR",A,"Mont-Blanc",45.8567,6.6175,850,2353,True),
+("megeve","Megève / Saint-Gervais","FR",A,"Mont-Blanc",45.8567,6.6175,1113,2353,False),
 ("laclusaz","La Clusaz","FR",A,"Aravis",45.9045,6.4239,1050,2485,True),
 ("grandbornand","Le Grand-Bornand","FR",A,"Aravis",45.9420,6.4280,1000,2100,True),
 ("flaine","Flaine – Grand Massif","FR",A,"Grand Massif",46.0058,6.6908,1600,2480,False),
@@ -18,15 +20,15 @@ S=[
 ("areches","Arêches-Beaufort","FR",A,"Beaufortain",45.6880,6.5650,1080,2300,True),
 ("larosiere","La Rosière","FR",A,"Tarentaise",45.6261,6.8497,1190,2800,True),
 ("saintefoy","Sainte-Foy-Tarentaise","FR",A,"Tarentaise",45.5870,6.8820,1550,2620,True),
-("tignes","Tignes","FR",A,"Tarentaise",45.4683,6.9056,1550,3456,True),
-("valdisere","Val d'Isère","FR",A,"Tarentaise",45.4481,6.9798,1785,3456,False),
-("lesarcs","Les Arcs","FR",A,"Tarentaise",45.5725,6.8283,1200,3226,True),
-("laplagne","La Plagne","FR",A,"Tarentaise",45.5058,6.6772,1207,3167,True),
+("tignes","Tignes","FR",A,"Tarentaise",45.4683,6.9056,2100,3456,False),
+("valdisere","Val d'Isère","FR",A,"Tarentaise",45.4481,6.9798,1850,3456,False),
+("lesarcs","Les Arcs","FR",A,"Tarentaise",45.5725,6.8283,1600,3226,False),
+("laplagne","La Plagne","FR",A,"Tarentaise",45.5058,6.6772,1800,3167,False),
 ("pralognan","Pralognan-la-Vanoise","FR",A,"Vanoise",45.3810,6.7210,1410,2355,True),
 ("courchevel","Courchevel","FR",A,"3 Vallées",45.4153,6.6347,1100,2738,False),
 ("meribel","Méribel","FR",A,"3 Vallées",45.3967,6.5656,1400,2952,False),
-("menuires","Les Menuires","FR",A,"3 Vallées",45.3236,6.5381,1450,2850,False),
-("valthorens","Val Thorens","FR",A,"3 Vallées",45.2979,6.5800,1800,3230,False),
+("menuires","Les Menuires","FR",A,"3 Vallées",45.3236,6.5381,1850,2850,False),
+("valthorens","Val Thorens","FR",A,"3 Vallées",45.2979,6.5800,2300,3230,False),
 ("valmorel","Valmorel","FR",A,"Grand Domaine",45.4610,6.4430,1250,2514,True),
 ("sybelles","La Toussuire – Les Sybelles","FR",A,"Maurienne",45.2560,6.2930,1100,2620,True),
 ("valloire","Valloire / Valmeinier","FR",A,"Maurienne",45.1650,6.4290,1430,2750,True),
@@ -39,8 +41,8 @@ S=[
 ("7laux","Les 7 Laux","FR",A,"Belledonne",45.2550,6.0200,1350,2400,True),
 ("chamrousse","Chamrousse","FR",A,"Belledonne",45.1250,5.8760,1400,2250,True),
 ("villarddelans","Villard-de-Lans / Corrençon","FR",A,"Vercors",45.0710,5.5530,1050,2050,True),
-("alpedhuez","L'Alpe d'Huez","FR",A,"Oisans",45.0921,6.0700,1125,3330,True),
-("deuxalpes","Les 2 Alpes","FR",A,"Oisans",45.0089,6.1236,1280,3523,True),
+("alpedhuez","L'Alpe d'Huez","FR",A,"Oisans",45.0921,6.0700,1860,3330,False),
+("deuxalpes","Les 2 Alpes","FR",A,"Oisans",45.0089,6.1236,1650,3523,False),
 ("lagrave","La Grave – La Meije","FR",A,"Oisans",45.0450,6.3060,1470,3534,True),
 ("serreche","Serre Chevalier","FR",A,"Hautes-Alpes",44.9440,6.5590,1200,2800,True),
 ("puystvincent","Puy-Saint-Vincent","FR",A,"Hautes-Alpes",44.8270,6.4840,1407,2677,True),
@@ -57,7 +59,7 @@ S=[
 # --- Suisse ---
 ("zermatt","Zermatt","CH",A,"Valais",46.0207,7.7491,1562,3899,True),
 ("saasfee","Saas-Fee","CH",A,"Valais",46.1081,7.9279,1800,3573,True),
-("verbier","Verbier – 4 Vallées","CH",A,"Valais",46.0961,7.2286,1350,3330,True),
+("verbier","Verbier – 4 Vallées","CH",A,"Valais",46.0961,7.2286,1500,3330,False),
 ("crans","Crans-Montana","CH",A,"Valais",46.3072,7.4811,1510,2927,True),
 ("grimentz","Grimentz / Zinal","CH",A,"Valais",46.1800,7.5750,1570,2900,True),
 ("stluc","Saint-Luc / Chandolin","CH",A,"Valais",46.2200,7.6000,1680,2980,True),

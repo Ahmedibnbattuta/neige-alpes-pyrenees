@@ -43,9 +43,9 @@
   "massif": "Mont-Blanc",
   "lat": 45.8567,
   "lon": 6.6175,
-  "baseAlt": 850,
+  "baseAlt": 1113,
   "topAlt": 2353,
-  "verified": true
+  "verified": false
  },
  {
   "id": "laclusaz",
@@ -163,9 +163,9 @@
   "massif": "Tarentaise",
   "lat": 45.4683,
   "lon": 6.9056,
-  "baseAlt": 1550,
+  "baseAlt": 2100,
   "topAlt": 3456,
-  "verified": true
+  "verified": false
  },
  {
   "id": "valdisere",
@@ -175,7 +175,7 @@
   "massif": "Tarentaise",
   "lat": 45.4481,
   "lon": 6.9798,
-  "baseAlt": 1785,
+  "baseAlt": 1850,
   "topAlt": 3456,
   "verified": false
  },
@@ -187,9 +187,9 @@
   "massif": "Tarentaise",
   "lat": 45.5725,
   "lon": 6.8283,
-  "baseAlt": 1200,
+  "baseAlt": 1600,
   "topAlt": 3226,
-  "verified": true
+  "verified": false
  },
  {
   "id": "laplagne",
@@ -199,9 +199,9 @@
   "massif": "Tarentaise",
   "lat": 45.5058,
   "lon": 6.6772,
-  "baseAlt": 1207,
+  "baseAlt": 1800,
   "topAlt": 3167,
-  "verified": true
+  "verified": false
  },
  {
   "id": "pralognan",
@@ -247,7 +247,7 @@
   "massif": "3 Vallées",
   "lat": 45.3236,
   "lon": 6.5381,
-  "baseAlt": 1450,
+  "baseAlt": 1850,
   "topAlt": 2850,
   "verified": false
  },
@@ -259,7 +259,7 @@
   "massif": "3 Vallées",
   "lat": 45.2979,
   "lon": 6.58,
-  "baseAlt": 1800,
+  "baseAlt": 2300,
   "topAlt": 3230,
   "verified": false
  },
@@ -415,9 +415,9 @@
   "massif": "Oisans",
   "lat": 45.0921,
   "lon": 6.07,
-  "baseAlt": 1125,
+  "baseAlt": 1860,
   "topAlt": 3330,
-  "verified": true
+  "verified": false
  },
  {
   "id": "deuxalpes",
@@ -427,9 +427,9 @@
   "massif": "Oisans",
   "lat": 45.0089,
   "lon": 6.1236,
-  "baseAlt": 1280,
+  "baseAlt": 1650,
   "topAlt": 3523,
-  "verified": true
+  "verified": false
  },
  {
   "id": "lagrave",
@@ -619,9 +619,9 @@
   "massif": "Valais",
   "lat": 46.0961,
   "lon": 7.2286,
-  "baseAlt": 1350,
+  "baseAlt": 1500,
   "topAlt": 3330,
-  "verified": true
+  "verified": false
  },
  {
   "id": "crans",

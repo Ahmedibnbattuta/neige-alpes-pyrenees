@@ -2,7 +2,7 @@
 import os, sys, unittest
 from datetime import date
 sys.path.insert(0, os.path.dirname(__file__))
-from snow_feed import step, depth_cm, season_start
+from snow_feed import PARAMS, step, depth_cm, season_start
 
 
 def run(days):
@@ -15,7 +15,8 @@ def run(days):
 class SnowModelTest(unittest.TestCase):
     def test_cold_precipitation_accumulates(self):
         st = run([(-5, -10, 10)])           # 10 mm d'eau à -7,5 °C
-        self.assertEqual(depth_cm(st), 9)   # ≈ 10 cm de neige fraîche, déjà un peu tassée
+        expected = 10 * PARAMS["precip_factor"] / PARAMS["new_density"] / 10   # cm de neige fraîche
+        self.assertAlmostEqual(depth_cm(st), expected, delta=1.5)
 
     def test_rain_does_not_accumulate(self):
         self.assertEqual(depth_cm(run([(8, 4, 20)])), 0)

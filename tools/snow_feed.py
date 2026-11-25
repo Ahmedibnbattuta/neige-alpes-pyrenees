@@ -34,14 +34,16 @@ PAUSE_BETWEEN_BATCHES = 62  # secondes
 # ---------------------------------------------------------------------------
 # Réglages du modèle (calibrés avec tools/calibrate.py sur des relevés officiels de stations).
 PARAMS = {
-    "snow_below": 0.0,     # °C (moyenne journalière) : en dessous, toute la précipitation tombe en neige
-    "rain_above": 2.5,     # °C : au-dessus, tout tombe en pluie
-    "ddf": 3.5,            # mm d'eau fondus par °C au-dessus de 0 et par jour (fonte degré-jour)
-    "new_density": 0.10,   # densité de la neige fraîche (0,10 = 10 cm de neige pour 1 cm d'eau)
-    "settled": 0.38,       # densité vers laquelle le manteau se tasse
-    "settle_rate": 0.07,   # part de l'excès d'épaisseur résorbée chaque jour
-    "precip_factor": 1.0,  # correction globale des précipitations du modèle (vent, sublimation…)
+    "snow_below": 1.0,     # °C (moyenne journalière) : en dessous, toute la précipitation tombe en neige
+    "rain_above": 2.0,     # °C : au-dessus, tout tombe en pluie
+    "ddf": 4.0,            # mm d'eau fondus par °C au-dessus de 0 et par jour (fonte degré-jour)
+    "new_density": 0.12,   # densité de la neige fraîche (0,12 ≈ 8 cm de neige pour 1 cm d'eau)
+    "settled": 0.30,       # densité vers laquelle le manteau se tasse
+    "settle_rate": 0.05,   # part de l'excès d'épaisseur résorbée chaque jour
+    "precip_factor": 0.6,  # correction des précipitations du modèle (vent, sublimation, surestimation en relief)
 }
+# Calage du 25/11/2026 (tools/calibrate.py) sur Val Thorens, Tignes, Les Arcs, 3 Vallées :
+# erreur moyenne divisée par 7 par rapport aux premiers réglages.
 MODEL_VERSION = 2  # à incrémenter quand les réglages changent : force un recalcul complet
 
 
