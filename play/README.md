@@ -6,7 +6,8 @@ Tout ce dont la Play Console a besoin est dans ce dossier.
 |---|---|
 | Fichier à envoyer (Android App Bundle) | `NeigeAlpesPyrenees.aab`, page *Releases* du dépôt |
 | Titre, description courte et longue (FR / EN) | `listing/fr-FR/`, `listing/en-US/` |
-| Politique de confidentialité | `PRIVACY.md` (doit être publiée à une adresse web publique) |
+| Politique de confidentialité | https://ahmedibnbattuta.github.io/neige-alpes-pyrenees/privacy.html |
+| Icône 512 × 512 | `graphics/icon-512.png` |
 | Formulaire « Sécurité des données » | ci-dessous |
 
 ## Étapes

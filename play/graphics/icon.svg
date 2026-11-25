@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#082c50"/>
+      <stop offset=".75" stop-color="#2f7cc4"/>
+      <stop offset="1" stop-color="#7fb3e0"/>
+    </linearGradient>
+    <linearGradient id="lit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cfe2f3"/>
+    </linearGradient>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f6fae"/>
+      <stop offset="1" stop-color="#1c548c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="404" cy="104" r="5" fill="#fff" opacity=".9"/>
+  <circle cx="96" cy="150" r="3" fill="#fff" opacity=".6"/>
+  <!-- Face nord (ombre) : sommet qui penche vers la gauche -->
+  <path d="M236 62 L226 74 L221 98 L213 132 L200 172 L185 212 L166 252 L142 294 L108 342 L66 394 L20 440 L20 512 L316 512 L300 320 L274 210 L254 120 Z" fill="url(#shade)"/>
+  <!-- Face est (éclairée) avec l'épaule du Hörnli -->
+  <path d="M236 62 L249 72 L259 96 L271 130 L287 166 L300 184 L318 194 L331 222 L353 262 L383 302 L421 344 L470 390 L512 418 L512 512 L316 512 L300 320 L274 210 L254 120 Z" fill="url(#lit)"/>
+  <!-- Bandes rocheuses de la face est -->
+  <g fill="#9cc0e2">
+    <path d="M262 118 L270 150 L264 152 L256 122 Z"/>
+    <path d="M286 196 L300 236 L292 238 L280 200 Z"/>
+    <path d="M330 246 L350 282 L341 284 L323 250 Z"/>
+    <path d="M300 268 L310 310 L302 311 L294 272 Z"/>
+    <path d="M372 316 L398 344 L388 346 L364 320 Z"/>
+  </g>
+  <!-- Névés sur la face nord -->
+  <g fill="#ffffff" opacity=".85">
+    <path d="M230 104 L222 136 L228 137 L236 108 Z"/>
+    <path d="M206 186 L192 220 L199 221 L212 190 Z"/>
+    <path d="M176 262 L156 294 L164 295 L182 266 Z"/>
+    <path d="M250 230 L240 270 L247 271 L256 234 Z"/>
+  </g>
+  <!-- Montagnes voisines -->
+  <path d="M0 448 L60 410 L110 432 L170 396 L230 438 L300 420 L360 440 L430 402 L512 436 L512 512 L0 512 Z" fill="#164b80"/>
+  <!-- Neige au premier plan -->
+  <path d="M0 462 C 100 440, 190 458, 270 470 S 430 444, 512 458 L512 512 L0 512 Z" fill="#ffffff"/>
+  <path d="M0 488 C 120 474, 230 494, 320 494 S 460 478, 512 486 L512 512 L0 512 Z" fill="#e4eff8"/>
+</svg>

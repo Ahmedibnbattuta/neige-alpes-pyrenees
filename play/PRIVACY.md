@@ -25,7 +25,7 @@ L'application **n'utilise pas votre localisation**.
 Si vous activez les alertes neige fraîche, l'application vérifie vos favoris en arrière-plan toutes les 6 heures et affiche une notification. Vous pouvez les désactiver à tout moment.
 
 ## Contact
-Pour toute question : [votre adresse e-mail de contact].
+Pour toute question : ahmedibnbattuta@outlook.com.
 
 ---
 
@@ -41,4 +41,4 @@ Pour toute question : [votre adresse e-mail de contact].
 
 **Notifications:** if you turn on fresh snow alerts, the app checks your favorites in the background every 6 hours. You can turn this off at any time.
 
-**Contact:** [your contact e-mail address].
+**Contact:** ahmedibnbattuta@outlook.com.

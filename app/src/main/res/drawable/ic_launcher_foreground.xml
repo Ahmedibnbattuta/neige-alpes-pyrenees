@@ -1,10 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Montagne enneigée stylisée, dans la zone sûre de 66dp de l'icône adaptative -->
+<!-- Le Cervin, vu de Zermatt. Dessin 512 × 512 réduit dans la zone visible de l'icône adaptative. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#7FB3E0" android:pathData="M24,76 L44,46 L56,60 L66,48 L84,76 Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M44,46 L37,56.5 L42,54 L46,58 L50,53 Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M66,48 L60.5,56 L64,55 L67,58 L71,55 Z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M22,76 h64 v4 h-64 z" />
+    android:viewportWidth="512" android:viewportHeight="512">
+    <group android:scaleX="0.6667" android:scaleY="0.6667" android:translateX="85.33" android:translateY="85.33">
+        <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.9" android:pathData="M399,104a5,5 0,1 0,10 0a5,5 0,1 0,-10 0" />
+        <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.6" android:pathData="M93,150a3,3 0,1 0,6 0a3,3 0,1 0,-6 0" />
+        <!-- Face nord (ombre) -->
+        <path android:pathData="M236,62 L226,74 L221,98 L213,132 L200,172 L185,212 L166,252 L142,294 L108,342 L66,394 L20,440 L20,512 L316,512 L300,320 L274,210 L254,120 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="0" android:startY="62" android:endX="0" android:endY="512"
+                    android:startColor="#FF2F6FAE" android:endColor="#FF1C548C" />
+            </aapt:attr>
+        </path>
+        <!-- Face est (éclairée) -->
+        <path android:pathData="M236,62 L249,72 L259,96 L271,130 L287,166 L300,184 L318,194 L331,222 L353,262 L383,302 L421,344 L470,390 L512,418 L512,512 L316,512 L300,320 L274,210 L254,120 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="236" android:startY="62" android:endX="512" android:endY="512"
+                    android:startColor="#FFFFFFFF" android:endColor="#FFCFE2F3" />
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#FF9CC0E2" android:pathData="M262,118 L270,150 L264,152 L256,122 Z M286,196 L300,236 L292,238 L280,200 Z M330,246 L350,282 L341,284 L323,250 Z M300,268 L310,310 L302,311 L294,272 Z M372,316 L398,344 L388,346 L364,320 Z" />
+        <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.85" android:pathData="M230,104 L222,136 L228,137 L236,108 Z M206,186 L192,220 L199,221 L212,190 Z M176,262 L156,294 L164,295 L182,266 Z M250,230 L240,270 L247,271 L256,234 Z" />
+        <!-- Montagnes voisines et neige -->
+        <path android:fillColor="#FF164B80" android:pathData="M0,448 L60,410 L110,432 L170,396 L230,438 L300,420 L360,440 L430,402 L512,436 L512,512 L0,512 Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M0,462 C100,440 190,458 270,470 S430,444 512,458 L512,512 L0,512 Z" />
+        <path android:fillColor="#FFE4EFF8" android:pathData="M0,488 C120,474 230,494 320,494 S460,478 512,486 L512,512 L0,512 Z" />
+    </group>
+    <!-- Prolonge la neige jusqu'au bord de l'icône (sous la zone réduite) -->
+    <path android:fillColor="#FFE4EFF8" android:pathData="M0,426 L512,426 L512,512 L0,512 Z" />
 </vector>
