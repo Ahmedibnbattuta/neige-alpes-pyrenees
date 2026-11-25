@@ -1,6 +1,6 @@
 # Neige Alpes & Pyrénées — application Android
 
-Liste de 65 stations de ski des Alpes (France, Suisse, Autriche, Italie, Allemagne, Slovénie)
+Liste de 153 stations de ski des Alpes (France, Suisse, Autriche, Italie, Allemagne, Slovénie)
 et des Pyrénées (France, Espagne, Andorre), avec pour chacune la **hauteur de neige en cm**
 à trois altitudes : bas du domaine, milieu et sommet. Également : chutes de neige prévues
 sur 3 jours et température au sommet.
@@ -38,6 +38,11 @@ app/src/main/java/fr/neige/stations/
 ├── data/SnowApi.kt       ← appels Open-Meteo
 └── ui/                   ← écran Jetpack Compose, ViewModel, thème
 ```
+
+## Site web
+Le dossier `web/` contient le site (une page + `privacy.html`), qui utilise la même liste de stations
+(`app/src/main/assets/stations.json`, recopiée au moment de la publication). Publication : workflow
+« Publier le site web » vers GitHub Pages (voir les prérequis en tête de `.github/workflows/site.yml`).
 
 ## Pistes pour la suite
 - Écran de détail par station (graphique sur 7 jours)

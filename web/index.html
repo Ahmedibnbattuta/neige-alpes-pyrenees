@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neige Alpes &amp; Pyrénées</title>
+<meta name="description" content="Hauteur de neige en bas et au sommet de 153 stations de ski des Alpes et des Pyrénées.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/*
+VOICE: un tableau d'enneigement de station, net et lisible, comme au pied des pistes.
+IDEA: le panneau « état des pistes » : une ligne par station, deux grands chiffres bas / sommet.
+PICTURE: carte des stations, repères colorés selon la neige au sommet.
+COLOUR and TYPE: bleu glacier profond, blanc neige, rouge balise ; Archivo pour les chiffres, Inter pour le texte.
+LAYOUT: bandeau titre + carte, puis filtres collants, puis le tableau ; une colonne sous 600 px.
+*/
+:root{color-scheme:light dark;
+  --bg:light-dark(#f4f8fb,#07141f);--panel:light-dark(#ffffff,#0e2233);--ink:light-dark(#0b1d2b,#e9f1f7);
+  --muted:light-dark(#4d6273,#9fb3c4);--line:light-dark(#d9e3ea,#1d3447);--deep:#0b3d6b;--glacier:#2f7cc4;--ice:#7fb3e0;--red:#d62828}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.num{font-family:Archivo,Inter,sans-serif}
+.hero{background:var(--deep);color:#fff;padding:clamp(24px,4vw,48px) max(5vw,16px) 0}
+.hero-in{max-width:1240px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:32px;align-items:end}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.05;margin:0 0 12px;text-wrap:balance;font-weight:800}
+.lead{color:#cfe2f3;max-width:34em;margin:0 0 20px}
+.stats{display:flex;gap:28px;flex-wrap:wrap;padding-bottom:28px}
+.stats b{display:block;font:800 30px/1 Archivo,sans-serif}.stats span{font-size:13px;color:#cfe2f3}
+#map{height:380px;border-radius:14px 14px 0 0;border:1px solid #1d4f7f;border-bottom:0}
+.bar{position:sticky;top:0;z-index:500;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1240px;margin:auto;padding:12px max(5vw,16px);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=search]{flex:1 1 220px;font:16px Inter,sans-serif;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);min-height:44px}
+button{font:600 14px Inter,sans-serif;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button[aria-pressed=true]{background:var(--glacier);border-color:var(--glacier);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
+select{font:16px Inter,sans-serif;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 10px}
+main{max-width:1240px;margin:auto;padding:16px max(5vw,16px) 48px}
+.meta{color:var(--muted);font-size:14px;margin:4px 0 12px}
+.err{color:var(--red);font-weight:600}
+.rows{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr);gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.row h2{font-size:17px;margin:0;line-height:1.2}
+.row small{color:var(--muted);font-size:13px}
+.lvl{display:flex;flex-direction:column;align-items:flex-end;text-align:right}
+.lvl .num{font-size:24px;font-weight:800;color:var(--glacier);white-space:nowrap}
+.lvl.top .num{color:light-dark(var(--deep),#9ccbf5)}
+.lvl small{white-space:nowrap}
+.gauge{height:4px;width:100%;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden}.gauge i{display:block;height:100%;background:currentColor}
+.fall{text-align:right;font-weight:600;white-space:nowrap}
+.fall small{display:block;font-weight:400}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:24px max(5vw,16px)}
+footer div{max-width:1240px;margin:auto}
+a{color:var(--glacier)}
+@media(max-width:860px){.hero-in{grid-template-columns:minmax(0,1fr)}#map{height:300px}}
+@media(max-width:600px){.row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.row .name{grid-column:1/-1}.fall{grid-column:1/-1;text-align:left}.fall small{display:inline;margin-left:6px}}
+@media(prefers-reduced-motion:no-preference){.row{transition:transform .15s}.row:hover{transform:translateY(-1px)}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <div>
+      <h1 id="t-title">Neige Alpes &amp; Pyrénées</h1>
+      <p class="lead" id="t-lead">Hauteur de neige en bas et au sommet de 153 stations, estimée à l'altitude exacte de chaque domaine et mise à jour chaque heure.</p>
+      <div class="stats">
+        <div><b id="s-count">153</b><span id="t-stations">stations</span></div>
+        <div><b id="s-max">–</b><span id="t-max">record au sommet</span></div>
+        <div><b id="s-fall">–</b><span id="t-fall">chutes prévues, 3 j (max)</span></div>
+      </div>
+    </div>
+    <div id="map" role="region" aria-label="Carte des stations"></div>
+  </div>
+</header>
+
+<div class="bar"><div class="bar-in">
+  <input type="search" id="q" placeholder="Rechercher une station, un massif, un pays" aria-label="Rechercher">
+  <button id="f-ALL" aria-pressed="true">Toutes</button>
+  <button id="f-ALPES" aria-pressed="false">Alpes</button>
+  <button id="f-PYRENEES" aria-pressed="false">Pyrénées</button>
+  <select id="sort" aria-label="Trier">
+    <option value="top">Neige au sommet</option>
+    <option value="base">Neige en bas</option>
+    <option value="alt">Altitude</option>
+    <option value="name">Nom</option>
+  </select>
+  <button id="units" aria-pressed="false">cm · m</button>
+</div></div>
+
+<main>
+  <p class="meta" id="meta">Chargement des données…</p>
+  <div class="rows" id="rows"></div>
+</main>
+
+<footer><div>
+  <p id="t-note">Hauteurs de neige estimées par modèles météo (Open-Meteo, licence CC BY 4.0) : ce ne sont pas les relevés officiels des stations. Vérifiez toujours le bulletin de la station et le bulletin avalanche avant de partir. Altitudes des domaines : skiresort.info. Fond de carte © contributeurs OpenStreetMap.</p>
+  <p><a href="privacy.html" id="t-privacy">Politique de confidentialité</a> · <span id="t-app">Existe aussi en application Android.</span></p>
+</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+{
+const FR = (navigator.language || 'fr').toLowerCase().startsWith('fr');
+const T = FR ? {
+  loading:'Chargement des données…', updated:'Données du ', err:'Données météo indisponibles pour le moment. Réessayez dans quelques minutes.',
+  base:'Bas', top:'Sommet', fall:'3 jours', none:'Aucune station ne correspond à votre recherche.',
+  countries:{FR:'France',CH:'Suisse',AT:'Autriche',IT:'Italie',DE:'Allemagne',SI:'Slovénie',ES:'Espagne',AD:'Andorre'},
+  ranges:{ALPES:'Alpes',PYRENEES:'Pyrénées'}, est:'altitudes estimées'
+} : {
+  loading:'Loading data…', updated:'Data from ', err:'Weather data unavailable right now. Try again in a few minutes.',
+  base:'Base', top:'Top', fall:'3 days', none:'No resort matches your search.',
+  countries:{FR:'France',CH:'Switzerland',AT:'Austria',IT:'Italy',DE:'Germany',SI:'Slovenia',ES:'Spain',AD:'Andorra'},
+  ranges:{ALPES:'Alps',PYRENEES:'Pyrenees'}, est:'estimated altitudes'
+};
+if (!FR) {
+  document.documentElement.lang = 'en';
+  const en = {'t-title':'Alps & Pyrenees Snow','t-lead':'Snow depth at the base and at the top of 153 resorts, estimated at the exact altitude of each ski area and updated hourly.',
+    't-stations':'resorts','t-max':'deepest at the top','t-fall':'3-day snowfall (max)','f-ALL':'All','f-ALPES':'Alps','f-PYRENEES':'Pyrenees',
+    't-note':'Snow depths are weather model estimates (Open-Meteo, CC BY 4.0), not the resorts\' official reports. Always check the resort snow report and the avalanche bulletin before you go. Ski area altitudes: skiresort.info. Map © OpenStreetMap contributors.',
+    't-privacy':'Privacy policy','t-app':'Also available as an Android app.'};
+  for (const [id, txt] of Object.entries(en)) document.getElementById(id).textContent = txt;
+  document.title = en['t-title'];
+  document.getElementById('q').placeholder = 'Search a resort, area or country';
+  const o = document.getElementById('sort').options;
+  ['Snow at top','Snow at base','Altitude','Name'].forEach((t, i) => o[i].textContent = t);
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/\p{M}+/gu, '');
+let US = (() => { try { return localStorage.getItem('units') === 'US'; } catch { return false; } })();
+const depth = cm => cm == null ? '–' : US ? Math.round(cm / 2.54) + ' in' : cm + ' cm';
+const fall = cm => cm == null ? '–' : '+' + (US ? (cm / 2.54).toFixed(cm < 25 ? 1 : 0) + ' in' : Math.round(cm) + ' cm');
+const alt = m => US ? Math.round(m * 3.28084).toLocaleString('en-US') + ' ft' : m + ' m';
+const colorFor = cm => cm == null || cm < 30 ? '#9aa5b1' : cm < 100 ? '#7fb3e0' : cm < 200 ? '#2f7cc4' : '#0b3d6b';
+
+let stations = [], data = {}, filter = 'ALL', fetchedAt = 0;
+const $ = id => document.getElementById(id);
+
+// --- Données Open-Meteo : 2 requêtes (bas, sommet), gardées 1 h dans le navigateur ---
+async function load() {
+  const key = 'meteo-v1';
+  try {
+    const c = JSON.parse(localStorage.getItem(key) || 'null');
+    if (c && Date.now() - c.at < 3600e3 && c.n === stations.length) { data = c.data; fetchedAt = c.at; return; }
+  } catch {}
+  const url = elev => 'https://api.open-meteo.com/v1/forecast?latitude=' + stations.map(s => s.lat).join(',') +
+    '&longitude=' + stations.map(s => s.lon).join(',') + '&elevation=' + stations.map(elev).join(',') +
+    '&current=snow_depth&daily=snowfall_sum&forecast_days=3&timezone=Europe%2FParis';
+  const [b, t] = await Promise.all([url(s => s.baseAlt), url(s => s.topAlt)].map(async u => {
+    const r = await fetch(u);
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }));
+  const cm = v => (typeof v === 'number' && v >= 0 && v <= 30) ? Math.round(v * 100) : null;
+  const sum = a => Array.isArray(a) && a.some(x => typeof x === 'number') ? a.reduce((s, x) => s + (typeof x === 'number' ? x : 0), 0) : null;
+  data = {};
+  stations.forEach((s, i) => {
+    data[s.id] = { base: cm(b[i]?.current?.snow_depth), top: cm(t[i]?.current?.snow_depth),
+                   fall: sum(t[i]?.daily?.snowfall_sum), time: t[i]?.current?.time };
+  });
+  fetchedAt = Date.now();
+  try { localStorage.setItem(key, JSON.stringify({ at: fetchedAt, n: stations.length, data })); } catch {}
+}
+
+// --- Carte ---
+let map, layer;
+function drawMap(list) {
+  if (!window.L) return;
+  if (!map) {
+    map = L.map('map', { scrollWheelZoom: false }).setView([45, 6], 5);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 15, attribution: '© OpenStreetMap' }).addTo(map);
+    layer = L.layerGroup().addTo(map);
+  }
+  layer.clearLayers();
+  list.forEach(s => {
+    const d = data[s.id] || {};
+    L.circleMarker([s.lat, s.lon], { radius: 7, color: '#fff', weight: 1.5, fillColor: colorFor(d.top), fillOpacity: 1 })
+      .bindPopup('<b>' + esc(s.name) + '</b><br>' + esc(T.base) + ' ' + esc(alt(s.baseAlt)) + ' : ' + esc(depth(d.base)) +
+                 '<br>' + esc(T.top) + ' ' + esc(alt(s.topAlt)) + ' : ' + esc(depth(d.top)))
+      .addTo(layer);
+  });
+  if (list.length) map.fitBounds(L.latLngBounds(list.map(s => [s.lat, s.lon])), { padding: [24, 24], maxZoom: 10 });
+}
+
+// --- Tableau ---
+function render() {
+  const q = norm($('q').value.trim());
+  let list = stations.filter(s => (filter === 'ALL' || s.range === filter) &&
+    (!q || [s.name, s.massif, T.countries[s.country], s.country].some(x => norm(x).includes(q))));
+  const sort = $('sort').value;
+  const v = (s, k) => data[s.id]?.[k] ?? -1;
+  list.sort(sort === 'top' ? (a, b) => v(b, 'top') - v(a, 'top') : sort === 'base' ? (a, b) => v(b, 'base') - v(a, 'base')
+    : sort === 'alt' ? (a, b) => b.topAlt - a.topAlt : (a, b) => a.name.localeCompare(b.name));
+  $('rows').innerHTML = list.length ? list.map(s => {
+    const d = data[s.id] || {};
+    const g = cm => Math.max(0, Math.min(100, (cm || 0) / 3));
+    return '<article class="row"><div class="name"><h2>' + esc(s.name) + '</h2><small>' +
+      esc(T.countries[s.country] + ' · ' + T.ranges[s.range] + ' · ' + s.massif + (s.verified ? '' : ' · ' + T.est)) + '</small></div>' +
+      '<div class="lvl"><span class="num">' + esc(depth(d.base)) + '</span><small>' + esc(T.base + ' ' + alt(s.baseAlt)) +
+      '</small><span class="gauge" style="color:var(--glacier)"><i style="width:' + g(d.base) + '%"></i></span></div>' +
+      '<div class="lvl top"><span class="num">' + esc(depth(d.top)) + '</span><small>' + esc(T.top + ' ' + alt(s.topAlt)) +
+      '</small><span class="gauge" style="color:var(--deep)"><i style="width:' + g(d.top) + '%"></i></span></div>' +
+      '<div class="fall">' + esc(fall(d.fall)) + '<small>' + esc(T.fall) + '</small></div></article>';
+  }).join('') : '<p>' + esc(T.none) + '</p>';
+  drawMap(list);
+  const tops = Object.values(data).map(d => d.top).filter(x => x != null);
+  const falls = Object.values(data).map(d => d.fall).filter(x => x != null);
+  $('s-count').textContent = list.length;
+  $('s-max').textContent = tops.length ? depth(Math.max(...tops)) : '–';
+  $('s-fall').textContent = falls.length ? fall(Math.max(...falls)) : '–';
+  $('units').textContent = US ? 'in · ft' : 'cm · m';
+  $('units').setAttribute('aria-pressed', String(US));
+}
+
+['ALL', 'ALPES', 'PYRENEES'].forEach(f => $('f-' + f).addEventListener('click', () => {
+  filter = f;
+  ['ALL', 'ALPES', 'PYRENEES'].forEach(x => $('f-' + x).setAttribute('aria-pressed', String(x === f)));
+  render();
+}));
+$('q').addEventListener('input', render);
+$('sort').addEventListener('change', render);
+$('units').addEventListener('click', () => { US = !US; try { localStorage.setItem('units', US ? 'US' : 'M'); } catch {} render(); });
+
+(async () => {
+  try {
+    stations = await (await fetch('stations.json')).json();
+    render();
+    await load();
+    const when = new Date(fetchedAt).toLocaleString(FR ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    $('meta').textContent = T.updated + when;
+  } catch (e) {
+    $('meta').innerHTML = '<span class="err">' + esc(T.err) + '</span>';
+  }
+  render();
+})();
+}
+</script>
+</body>
+</html>
