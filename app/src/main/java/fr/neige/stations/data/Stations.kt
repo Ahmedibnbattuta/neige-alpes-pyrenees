@@ -53,6 +53,9 @@ object Stations {
         loaded = parse(text)
     }
 
+    /** Pour les tests unitaires uniquement. */
+    internal fun setForTests(list: List<Station>) { loaded = list }
+
     /** Lecture du JSON (séparée pour pouvoir être testée). */
     fun parse(text: String): List<Station> {
         val arr = JSONArray(text)

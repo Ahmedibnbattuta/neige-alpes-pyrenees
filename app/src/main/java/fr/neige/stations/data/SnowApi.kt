@@ -280,7 +280,7 @@ class SnowApi(cacheRoot: File) {
             "&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
     }
 
-    private fun parse(rawBody: String, altitudes: List<Int>, withDepth: Boolean): List<LevelData> {
+    internal fun parse(rawBody: String, altitudes: List<Int>, withDepth: Boolean): List<LevelData> {
         val body = rawBody.trim()
         // Un seul point -> objet JSON ; plusieurs -> tableau.
         val items: List<JSONObject> = if (body.startsWith("[")) {
@@ -316,9 +316,9 @@ class SnowApi(cacheRoot: File) {
 
     // ---------- Cache disque ----------
 
-    private data class Cached(val body: String, val time: Long, val rateLimited: Boolean)
+    internal data class Cached(val body: String, val time: Long, val rateLimited: Boolean)
 
-    private fun cacheFile(url: String): File {
+    internal fun cacheFile(url: String): File {
         val hash = MessageDigest.getInstance("SHA-256").digest(url.toByteArray())
             .joinToString("") { "%02x".format(it) }
         return File(cacheDir, "$hash.json")
@@ -329,7 +329,7 @@ class SnowApi(cacheRoot: File) {
      * Si le serveur répond 429 (trop d'appels) ou est injoignable, renvoie l'ancienne réponse
      * en cache quand il y en a une.
      */
-    private fun cachedGet(url: String, maxAgeMs: Long): Cached {
+    internal fun cachedGet(url: String, maxAgeMs: Long): Cached {
         val f = cacheFile(url)
         val now = System.currentTimeMillis()
         if (f.exists() && now - f.lastModified() < maxAgeMs) {
