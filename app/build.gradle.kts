@@ -12,27 +12,32 @@ android {
         applicationId = "fr.neige.stations"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.4.0"
+        versionCode = 6
+        versionName = "0.5.0"
     }
 
     // Clé de signature fixe : permet d'installer chaque nouvelle version par-dessus l'ancienne.
+    // Si les variables NEIGE_KEYSTORE_* sont définies (secrets GitHub), elles remplacent la clé du dépôt.
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("neige-debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        create("neige") {
+            storeFile = file(System.getenv("NEIGE_KEYSTORE_PATH") ?: "neige-debug.keystore")
+            storePassword = System.getenv("NEIGE_KEYSTORE_PASSWORD") ?: "android"
+            keyAlias = System.getenv("NEIGE_KEY_ALIAS") ?: "androiddebugkey"
+            keyPassword = System.getenv("NEIGE_KEY_PASSWORD") ?: "android"
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("neige")
         }
+        // Version distribuée : non débogable, code optimisé et obscurci par R8.
         release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("neige")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {

@@ -92,7 +92,7 @@ object SnowApi {
         val lons = stations.joinToString(",") { it.lon.toString() }
         val elevs = stations.joinToString(",") { altitudeOf(it, level).toString() }
         val current = if (model == null || model.hasSnowDepth) "snow_depth,temperature_2m" else "temperature_2m"
-        val url = "https://api.open-meteo.com/v1/forecast" +
+        val url = "https://$API_HOST/v1/forecast" +
             "?latitude=$lats&longitude=$lons&elevation=$elevs" +
             "&current=$current" +
             "&daily=snowfall_sum&forecast_days=3" +
@@ -123,25 +123,48 @@ object SnowApi {
             }
             LevelData(
                 altitude = altitudeOf(s, level),
-                snowCm = if (depthM.isNaN()) null else (depthM * 100).roundToInt().coerceAtLeast(0),
-                tempC = if (temp.isNaN()) null else temp,
-                snowfall3dCm = if (any) sum else null,
+                // Valeurs hors limites physiques plausibles -> ignorées.
+                snowCm = depthM.takeIf { !it.isNaN() && it in 0.0..30.0 }?.let { (it * 100).roundToInt() },
+                tempC = temp.takeIf { !it.isNaN() && it in -60.0..50.0 },
+                snowfall3dCm = sum.takeIf { any && it in 0.0..1000.0 },
                 time = time,
             )
         }
     }
 
+    private const val API_HOST = "api.open-meteo.com"
+    private const val MAX_RESPONSE_BYTES = 2_000_000
+
     private fun httpGet(url: String): String {
-        val conn = URL(url).openConnection() as HttpURLConnection
+        val u = URL(url)
+        // Seule l'API Open-Meteo, en HTTPS, est autorisée.
+        require(u.protocol == "https" && u.host == API_HOST) { "Adresse non autorisée" }
+        val conn = u.openConnection() as HttpURLConnection
         conn.connectTimeout = 15_000
         conn.readTimeout = 20_000
+        conn.instanceFollowRedirects = false
+        conn.setRequestProperty("Accept", "application/json")
         try {
             val code = conn.responseCode
             if (code !in 200..299) {
-                val err = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                throw IllegalStateException("Erreur serveur $code ${err.take(200)}")
+                // Le détail de l'erreur serveur n'est pas affiché à l'écran.
+                throw IllegalStateException("le serveur météo a répondu $code")
             }
-            return conn.inputStream.bufferedReader().use { it.readText() }
+            val type = conn.contentType.orEmpty()
+            if (!type.startsWith("application/json")) throw IllegalStateException("réponse inattendue du serveur")
+            // Lecture limitée en taille pour éviter une réponse anormalement grosse.
+            val bytes = conn.inputStream.use { input ->
+                val out = java.io.ByteArrayOutputStream()
+                val buf = ByteArray(16 * 1024)
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    out.write(buf, 0, n)
+                    if (out.size() > MAX_RESPONSE_BYTES) throw IllegalStateException("réponse trop volumineuse")
+                }
+                out.toByteArray()
+            }
+            return String(bytes, Charsets.UTF_8)
         } finally {
             conn.disconnect()
         }

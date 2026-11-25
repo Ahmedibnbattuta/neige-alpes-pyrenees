@@ -4,25 +4,35 @@ on:
   push:
   workflow_dispatch:
 
+# Par défaut, aucun droit d'écriture.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # nécessaire uniquement pour publier la release
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - run: chmod +x gradlew && ./gradlew assembleDebug
-      - run: cp app/build/outputs/apk/debug/app-debug.apk NeigeAlpesPyrenees.apk
+      # Vérifie que gradle-wrapper.jar est authentique (protection contre un wrapper piégé).
+      - uses: gradle/actions/wrapper-validation@v4
+      - run: chmod +x gradlew && ./gradlew assembleRelease
+      - run: cp app/build/outputs/apk/release/app-release.apk NeigeAlpesPyrenees.apk
+      - run: sha256sum NeigeAlpesPyrenees.apk | tee NeigeAlpesPyrenees.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: neige-alpes-pyrenees-apk
-          path: NeigeAlpesPyrenees.apk
+          path: |
+            NeigeAlpesPyrenees.apk
+            NeigeAlpesPyrenees.apk.sha256
       # Publie l'APK en téléchargement direct (page « Releases » du dépôt)
       - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
@@ -30,5 +40,7 @@ jobs:
           tag_name: latest
           name: Dernière version
           body: "APK compilé automatiquement depuis le commit ${{ github.sha }}."
-          files: NeigeAlpesPyrenees.apk
+          files: |
+            NeigeAlpesPyrenees.apk
+            NeigeAlpesPyrenees.apk.sha256
           make_latest: true

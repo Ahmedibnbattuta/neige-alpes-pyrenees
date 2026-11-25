@@ -6,6 +6,11 @@ import org.json.JSONObject
 import java.time.LocalDate
 import java.util.UUID
 
+const val MAX_LABEL = 40
+const val MAX_ALTITUDE = 5000
+const val MAX_SNOW_CM = 2000
+private const val MAX_READINGS = 500
+
 /** Relevé de neige publié par la station elle-même (saisi à la main). */
 data class OfficialReading(
     val id: String = UUID.randomUUID().toString(),
@@ -27,18 +32,25 @@ class OfficialReadingsStore(private val prefs: SharedPreferences) {
 
     fun load(): List<OfficialReading> {
         val raw = prefs.getString(KEY, null) ?: return DEFAULT_READINGS
+        val validStations = STATIONS.map { it.id }.toSet()
         return runCatching {
             val arr = JSONArray(raw)
-            List(arr.length()) { i ->
-                val o = arr.getJSONObject(i)
-                OfficialReading(
-                    id = o.getString("id"),
-                    stationId = o.getString("stationId"),
-                    label = o.getString("label"),
-                    altitude = if (o.isNull("altitude")) null else o.getInt("altitude"),
-                    snowCm = o.getInt("snowCm"),
-                    date = LocalDate.parse(o.getString("date")),
-                )
+            (0 until minOf(arr.length(), MAX_READINGS)).mapNotNull { i ->
+                // Un relevé illisible ou hors limites est ignoré, sans faire échouer les autres.
+                runCatching {
+                    val o = arr.getJSONObject(i)
+                    OfficialReading(
+                        id = o.getString("id").take(64),
+                        stationId = o.getString("stationId"),
+                        label = o.getString("label").take(MAX_LABEL),
+                        altitude = if (o.isNull("altitude")) null else o.getInt("altitude"),
+                        snowCm = o.getInt("snowCm"),
+                        date = LocalDate.parse(o.getString("date")),
+                    )
+                }.getOrNull()?.takeIf {
+                    it.stationId in validStations && it.snowCm in 0..MAX_SNOW_CM &&
+                        (it.altitude == null || it.altitude in 0..MAX_ALTITUDE)
+                }
             }
         }.getOrDefault(DEFAULT_READINGS)
     }

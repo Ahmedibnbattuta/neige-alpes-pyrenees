@@ -53,6 +53,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import fr.neige.stations.data.MAX_ALTITUDE
+import fr.neige.stations.data.MAX_LABEL
+import fr.neige.stations.data.MAX_SNOW_CM
 import fr.neige.stations.data.OfficialReading
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -328,8 +331,9 @@ private fun ReadingDialog(
     var altitude by remember { mutableStateOf(initial.altitude?.toString() ?: "") }
     var snow by remember { mutableStateOf(if (isNew) "" else initial.snowCm.toString()) }
     val snowValue = snow.toIntOrNull()
-    val valid = label.isNotBlank() && snowValue != null && snowValue >= 0 &&
-        (altitude.isBlank() || altitude.toIntOrNull() != null)
+    val altValue = altitude.toIntOrNull()
+    val valid = label.isNotBlank() && snowValue != null && snowValue in 0..MAX_SNOW_CM &&
+        (altitude.isBlank() || (altValue != null && altValue in 0..MAX_ALTITUDE))
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -337,17 +341,17 @@ private fun ReadingDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = label, onValueChange = { label = it },
+                    value = label, onValueChange = { label = it.filterNot(Char::isISOControl).take(MAX_LABEL) },
                     label = { Text("Point de mesure (ex. Tignes 2100)") }, singleLine = true,
                 )
                 OutlinedTextField(
-                    value = altitude, onValueChange = { altitude = it.filter(Char::isDigit) },
-                    label = { Text("Altitude en m (facultatif)") }, singleLine = true,
+                    value = altitude, onValueChange = { altitude = it.filter(Char::isDigit).take(4) },
+                    label = { Text("Altitude en m (facultatif, max $MAX_ALTITUDE)") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
                 OutlinedTextField(
-                    value = snow, onValueChange = { snow = it.filter(Char::isDigit) },
-                    label = { Text("Hauteur de neige en cm") }, singleLine = true,
+                    value = snow, onValueChange = { snow = it.filter(Char::isDigit).take(4) },
+                    label = { Text("Hauteur de neige en cm (0 à $MAX_SNOW_CM)") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
                 Text(
