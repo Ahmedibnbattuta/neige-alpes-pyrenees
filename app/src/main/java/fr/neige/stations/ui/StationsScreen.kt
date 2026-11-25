@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.neige.stations.data.CompareReport
 import fr.neige.stations.data.LevelData
 import fr.neige.stations.data.SnowReport
 import fr.neige.stations.data.Station
@@ -138,6 +139,14 @@ fun StationsScreen(vm: StationsViewModel) {
             state.error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
+            state.notice?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
 
             if (showMap) {
                 StationsMap(
@@ -175,6 +184,8 @@ fun StationsScreen(vm: StationsViewModel) {
                         onFavorite = { vm.toggleFavorite(s.id) },
                         readings = state.readingsFor(s.id),
                         onEditReading = { editing = it },
+                        compare = state.compare[s.id],
+                        onCompare = { vm.loadCompare(s) },
                         onAddReading = {
                             editing = OfficialReading(
                                 stationId = s.id, label = "", altitude = null, snowCm = 0, date = LocalDate.now(),
@@ -213,6 +224,8 @@ private fun StationCard(
     onFavorite: () -> Unit,
     readings: List<OfficialReading>,
     onEditReading: (OfficialReading) -> Unit,
+    compare: CompareUi?,
+    onCompare: () -> Unit,
     onAddReading: () -> Unit,
 ) {
     ElevatedCard(Modifier.fillMaxWidth()) {
@@ -246,8 +259,24 @@ private fun StationCard(
                 val temp = top.tempC?.let { " · ${it.roundToInt()} °C au sommet" } ?: ""
                 Text(fall + temp, style = MaterialTheme.typography.bodyMedium)
             }
-            if (report != null && (report.icon != null || report.arome != null)) {
-                ModelCompareTable(station, report)
+            when (compare) {
+                is CompareUi.Loaded -> ModelCompareTable(station, compare.report)
+                CompareUi.Loading -> Text(
+                    "Chargement de la comparaison…",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+                is CompareUi.Failed, null -> {
+                    if (compare is CompareUi.Failed) Text(
+                        compare.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                    TextButton(onClick = onCompare, contentPadding = PaddingValues(horizontal = 0.dp)) {
+                        Text("Comparer les modèles ICON / AROME")
+                    }
+                }
             }
             report?.updatedAt?.let { t ->
                 Text(
@@ -272,7 +301,7 @@ private fun StationCard(
 }
 
 @Composable
-private fun ModelCompareTable(station: Station, report: SnowReport) {
+private fun ModelCompareTable(station: Station, report: CompareReport) {
     Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
         Text("Comparaison des modèles", style = MaterialTheme.typography.labelLarge)
         CompareRow("Modèle", "Bas ${station.baseAlt} m", "Sommet ${station.topAlt} m", "Chutes 3 j", header = true)

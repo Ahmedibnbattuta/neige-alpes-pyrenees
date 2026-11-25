@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.neige.stations.data.CompareReport
 import fr.neige.stations.data.OfficialReading
 import fr.neige.stations.data.OfficialReadingsStore
 import fr.neige.stations.data.Range
+import fr.neige.stations.data.RateLimitException
 import fr.neige.stations.data.STATIONS
 import fr.neige.stations.data.SnowApi
 import fr.neige.stations.data.SnowReport
@@ -17,7 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.Normalizer
-import java.time.LocalDateTime
+import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -34,6 +37,8 @@ data class UiState(
     val error: String? = null,
     val updatedAt: String? = null,
     val readings: List<OfficialReading> = emptyList(),
+    val notice: String? = null,
+    val compare: Map<String, CompareUi> = emptyMap(),
 ) {
     fun readingsFor(stationId: String) = readings.filter { it.stationId == stationId }
 
@@ -60,6 +65,13 @@ data class UiState(
         }
 }
 
+/** État de la comparaison des modèles pour une station. */
+sealed interface CompareUi {
+    data object Loading : CompareUi
+    data class Loaded(val report: CompareReport) : CompareUi
+    data class Failed(val message: String) : CompareUi
+}
+
 private fun String.normalized(): String =
     Normalizer.normalize(lowercase().trim(), Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
 
@@ -75,7 +87,10 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
     )
     val state: StateFlow<UiState> = _state.asStateFlow()
 
-    init { refresh() }
+    private val api = SnowApi(app.cacheDir)
+
+    // Au démarrage, des données de moins de 30 min sont réutilisées sans appeler le serveur.
+    init { load(AUTO_MAX_AGE_MS) }
 
     fun setQuery(q: String) = _state.update { it.copy(query = q) }
     fun setFilter(f: Filter) = _state.update { it.copy(filter = f) }
@@ -107,20 +122,57 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun refresh() {
+    /** Bouton Actualiser : redemande au serveur si les données ont plus de 10 min. */
+    fun refresh() = load(MANUAL_MAX_AGE_MS)
+
+    private fun load(maxAgeMs: Long) {
         if (_state.value.loading) return
-        _state.update { it.copy(loading = true, error = null) }
+        _state.update { it.copy(loading = true, error = null, notice = null) }
         viewModelScope.launch {
             try {
-                val reports = SnowApi.fetchAll(STATIONS)
-                val now = LocalDateTime.now()
+                val result = api.fetchAll(STATIONS, maxAgeMs)
+                val at = Instant.ofEpochMilli(result.fetchedAt).atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("EEEE d MMMM 'à' HH'h'mm", Locale.FRENCH))
-                _state.update { it.copy(reports = reports, loading = false, updatedAt = now) }
+                _state.update {
+                    it.copy(
+                        reports = result.reports,
+                        loading = false,
+                        updatedAt = at,
+                        notice = if (result.rateLimited)
+                            "Le service météo limite le nombre de demandes : dernières données reçues affichées. Réessayez dans quelques minutes."
+                        else null,
+                    )
+                }
+            } catch (e: RateLimitException) {
+                _state.update {
+                    it.copy(loading = false, error = "Le service météo limite le nombre de demandes. Réessayez dans quelques minutes.")
+                }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(loading = false, error = "Impossible de charger les données : ${e.message ?: "erreur réseau"}")
                 }
             }
         }
+    }
+
+    /** Comparaison ICON / AROME, demandée seulement pour la station consultée. */
+    fun loadCompare(station: Station) {
+        if (_state.value.compare[station.id] is CompareUi.Loading) return
+        _state.update { it.copy(compare = it.compare + (station.id to CompareUi.Loading)) }
+        viewModelScope.launch {
+            val ui = try {
+                CompareUi.Loaded(api.fetchCompare(station))
+            } catch (e: RateLimitException) {
+                CompareUi.Failed("Trop de demandes, réessayez dans quelques minutes.")
+            } catch (e: Exception) {
+                CompareUi.Failed("Comparaison indisponible pour le moment.")
+            }
+            _state.update { it.copy(compare = it.compare + (station.id to ui)) }
+        }
+    }
+
+    private companion object {
+        const val AUTO_MAX_AGE_MS = 30 * 60_000L
+        const val MANUAL_MAX_AGE_MS = 10 * 60_000L
     }
 }

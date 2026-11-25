@@ -1,15 +1,14 @@
 package fr.neige.stations.data
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
@@ -29,12 +28,28 @@ data class SnowReport(
     val base: LevelData,
     val mid: LevelData,
     val top: LevelData,
-    val icon: ModelData? = null,   // DWD ICON : hauteur de neige + chutes prévues
-    val arome: ModelData? = null,  // Météo-France AROME : chutes prévues uniquement
 ) {
     /** Date de mise à jour de l'enneigement fournie par Open-Meteo. */
     val updatedAt: LocalDateTime? get() = top.time ?: mid.time ?: base.time
 }
+
+/** Comparaison des modèles pour une station, chargée à la demande. */
+data class CompareReport(
+    val icon: ModelData?,   // DWD ICON : hauteur de neige + chutes prévues
+    val arome: ModelData?,  // Météo-France AROME : chutes prévues uniquement
+)
+
+/** Résultat d'un chargement : données + moment où elles ont été reçues du serveur. */
+data class FetchResult(
+    val reports: Map<String, SnowReport>,
+    val fetchedAt: Long,          // horodatage (ms) de la réponse du serveur
+    val rateLimited: Boolean,     // true si la limite d'appels a été atteinte (données plus anciennes)
+)
+
+class RateLimitException : Exception("limite d'appels du service météo atteinte")
+
+private const val API_HOST = "api.open-meteo.com"
+private const val MAX_RESPONSE_BYTES = 2_000_000
 
 private enum class Level { BASE, MID, TOP }
 
@@ -46,40 +61,57 @@ private enum class Model(val id: String, val hasSnowDepth: Boolean) {
 
 /**
  * Récupère la hauteur de neige modélisée via l'API gratuite Open-Meteo
- * (https://open-meteo.com, licence CC BY 4.0). Une requête par niveau d'altitude,
- * toutes les stations en une seule fois.
+ * (https://open-meteo.com, licence CC BY 4.0).
+ *
+ * Open-Meteo compte chaque station comme un appel (limites gratuites : 600/min, 5 000/h,
+ * 10 000/jour). Les réponses sont donc gardées en cache sur le téléphone, et la comparaison
+ * des modèles n'est demandée que pour la station consultée.
  */
-object SnowApi {
+class SnowApi(cacheRoot: File) {
 
-    suspend fun fetchAll(stations: List<Station>): Map<String, SnowReport> = withContext(Dispatchers.IO) {
-        coroutineScope {
-            val main = Level.entries.map { level -> async { level to fetchLevel(stations, level, null) } }
-            // Comparaison des modèles : bas et sommet. Un échec ici ne bloque pas l'affichage principal.
-            val compare = Model.entries.flatMap { m ->
-                listOf(Level.BASE, Level.TOP).map { level ->
-                    async { (m to level) to runCatching { fetchLevel(stations, level, m) }.getOrNull() }
-                }
-            }
-            val results = main.awaitAll().toMap()
-            val cmp = compare.awaitAll().toMap()
+    private val cacheDir = File(cacheRoot, "meteo").apply { mkdirs() }
 
-            fun modelData(m: Model, i: Int): ModelData? {
-                val b = cmp[m to Level.BASE]?.getOrNull(i)
-                val t = cmp[m to Level.TOP]?.getOrNull(i)
-                return if (b == null && t == null) null else ModelData(b, t)
-            }
-
-            stations.indices.associate { i ->
-                stations[i].id to SnowReport(
-                    base = results.getValue(Level.BASE)[i],
-                    mid = results.getValue(Level.MID)[i],
-                    top = results.getValue(Level.TOP)[i],
-                    icon = modelData(Model.ICON, i),
-                    arome = modelData(Model.AROME, i),
-                )
-            }
+    /** Liste principale : 3 requêtes (bas, milieu, sommet) pour toutes les stations. */
+    suspend fun fetchAll(stations: List<Station>, maxAgeMs: Long): FetchResult = withContext(Dispatchers.IO) {
+        val urls = Level.entries.associateWith { level ->
+            buildUrl(stations.map { Point(it.lat, it.lon, altitudeOf(it, level)) }, null)
         }
+        var rateLimited = false
+        var oldest = Long.MAX_VALUE
+        val bodies = urls.mapValues { (_, url) ->
+            val (body, time, limited) = cachedGet(url, maxAgeMs)
+            if (limited) rateLimited = true
+            oldest = minOf(oldest, time)
+            body
+        }
+        val parsed = bodies.mapValues { (level, body) ->
+            parse(body, stations.map { altitudeOf(it, level) }, withDepth = true)
+        }
+        val reports = stations.indices.associate { i ->
+            stations[i].id to SnowReport(
+                base = parsed.getValue(Level.BASE)[i],
+                mid = parsed.getValue(Level.MID)[i],
+                top = parsed.getValue(Level.TOP)[i],
+            )
+        }
+        FetchResult(reports, oldest, rateLimited)
     }
+
+    /** Comparaison ICON / AROME pour une station : 2 requêtes de 2 points (bas et sommet). */
+    suspend fun fetchCompare(s: Station): CompareReport = withContext(Dispatchers.IO) {
+        val points = listOf(Point(s.lat, s.lon, s.baseAlt), Point(s.lat, s.lon, s.topAlt))
+        fun load(m: Model): ModelData? = runCatching {
+            val (body, _, _) = cachedGet(buildUrl(points, m), COMPARE_MAX_AGE_MS)
+            val l = parse(body, listOf(s.baseAlt, s.topAlt), withDepth = m.hasSnowDepth)
+            ModelData(l.getOrNull(0), l.getOrNull(1))
+        }.getOrNull()
+        val icon = load(Model.ICON)
+        val arome = load(Model.AROME)
+        if (icon == null && arome == null) throw IllegalStateException("comparaison indisponible pour le moment")
+        CompareReport(icon, arome)
+    }
+
+    private data class Point(val lat: Double, val lon: Double, val elevation: Int)
 
     private fun altitudeOf(s: Station, level: Level) = when (level) {
         Level.BASE -> s.baseAlt
@@ -87,29 +119,30 @@ object SnowApi {
         Level.TOP -> s.topAlt
     }
 
-    private fun fetchLevel(stations: List<Station>, level: Level, model: Model?): List<LevelData> {
-        val lats = stations.joinToString(",") { it.lat.toString() }
-        val lons = stations.joinToString(",") { it.lon.toString() }
-        val elevs = stations.joinToString(",") { altitudeOf(it, level).toString() }
+    private fun buildUrl(points: List<Point>, model: Model?): String {
         val current = if (model == null || model.hasSnowDepth) "snow_depth,temperature_2m" else "temperature_2m"
-        val url = "https://$API_HOST/v1/forecast" +
-            "?latitude=$lats&longitude=$lons&elevation=$elevs" +
+        return "https://$API_HOST/v1/forecast" +
+            "?latitude=" + points.joinToString(",") { it.lat.toString() } +
+            "&longitude=" + points.joinToString(",") { it.lon.toString() } +
+            "&elevation=" + points.joinToString(",") { it.elevation.toString() } +
             "&current=$current" +
             "&daily=snowfall_sum&forecast_days=3" +
             (model?.let { "&models=${it.id}" } ?: "") +
             "&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
+    }
 
-        val body = httpGet(url).trim()
-        // Une seule station -> objet JSON ; plusieurs -> tableau.
+    private fun parse(rawBody: String, altitudes: List<Int>, withDepth: Boolean): List<LevelData> {
+        val body = rawBody.trim()
+        // Un seul point -> objet JSON ; plusieurs -> tableau.
         val items: List<JSONObject> = if (body.startsWith("[")) {
             val arr = JSONArray(body)
             List(arr.length()) { arr.getJSONObject(it) }
         } else listOf(JSONObject(body))
 
-        return stations.mapIndexed { i, s ->
+        return altitudes.mapIndexed { i, alt ->
             val obj = items.getOrNull(i)
             val current = obj?.optJSONObject("current")
-            val depthM = current?.optDouble("snow_depth", Double.NaN) ?: Double.NaN
+            val depthM = if (withDepth) current?.optDouble("snow_depth", Double.NaN) ?: Double.NaN else Double.NaN
             val temp = current?.optDouble("temperature_2m", Double.NaN) ?: Double.NaN
             // "time" est au format ISO local, ex. "2026-11-25T18:00"
             val time = current?.optString("time")?.takeIf { it.isNotBlank() }
@@ -122,7 +155,7 @@ object SnowApi {
                 if (!v.isNaN()) { sum += v; any = true }
             }
             LevelData(
-                altitude = altitudeOf(s, level),
+                altitude = alt,
                 // Valeurs hors limites physiques plausibles -> ignorées.
                 snowCm = depthM.takeIf { !it.isNaN() && it in 0.0..30.0 }?.let { (it * 100).roundToInt() },
                 tempC = temp.takeIf { !it.isNaN() && it in -60.0..50.0 },
@@ -132,8 +165,44 @@ object SnowApi {
         }
     }
 
-    private const val API_HOST = "api.open-meteo.com"
-    private const val MAX_RESPONSE_BYTES = 2_000_000
+    // ---------- Cache disque ----------
+
+    private data class Cached(val body: String, val time: Long, val rateLimited: Boolean)
+
+    private fun cacheFile(url: String): File {
+        val hash = MessageDigest.getInstance("SHA-256").digest(url.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        return File(cacheDir, "$hash.json")
+    }
+
+    /**
+     * Renvoie la réponse en cache si elle a moins de [maxAgeMs], sinon interroge le serveur.
+     * Si le serveur répond 429 (trop d'appels) ou est injoignable, renvoie l'ancienne réponse
+     * en cache quand il y en a une.
+     */
+    private fun cachedGet(url: String, maxAgeMs: Long): Cached {
+        val f = cacheFile(url)
+        val now = System.currentTimeMillis()
+        if (f.exists() && now - f.lastModified() < maxAgeMs) {
+            return Cached(f.readText(), f.lastModified(), false)
+        }
+        return try {
+            val body = httpGet(url)
+            val tmp = File(cacheDir, f.name + ".tmp")
+            tmp.writeText(body)
+            tmp.renameTo(f)
+            Cached(body, now, false)
+        } catch (e: RateLimitException) {
+            if (f.exists()) Cached(f.readText(), f.lastModified(), true) else throw e
+        } catch (e: Exception) {
+            // Réseau coupé ou erreur serveur : on garde les dernières données connues.
+            if (f.exists()) Cached(f.readText(), f.lastModified(), false) else throw e
+        }
+    }
+
+    private companion object {
+        const val COMPARE_MAX_AGE_MS = 30 * 60_000L
+    }
 
     private fun httpGet(url: String): String {
         val u = URL(url)
@@ -146,6 +215,7 @@ object SnowApi {
         conn.setRequestProperty("Accept", "application/json")
         try {
             val code = conn.responseCode
+            if (code == 429) throw RateLimitException()
             if (code !in 200..299) {
                 // Le détail de l'erreur serveur n'est pas affiché à l'écran.
                 throw IllegalStateException("le serveur météo a répondu $code")
