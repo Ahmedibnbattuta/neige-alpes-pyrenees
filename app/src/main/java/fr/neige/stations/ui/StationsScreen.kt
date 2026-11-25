@@ -42,7 +42,12 @@ import androidx.compose.ui.unit.sp
 import fr.neige.stations.data.LevelData
 import fr.neige.stations.data.SnowReport
 import fr.neige.stations.data.Station
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.roundToInt
+
+private val DATA_DATE_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("EEEE d MMMM yyyy 'à' HH'h'mm", Locale.FRENCH)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,7 +107,7 @@ fun StationsScreen(vm: StationsViewModel) {
                 item {
                     Text(
                         text = "${stations.size} stations" +
-                            (state.updatedAt?.let { " · mis à jour à $it" } ?: ""),
+                            (state.updatedAt?.let { " · actualisé le $it" } ?: ""),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -179,6 +184,14 @@ private fun StationCard(station: Station, report: SnowReport?, favorite: Boolean
                 val fall = top.snowfall3dCm?.let { "+${it.roundToInt()} cm prévus sur 3 jours" } ?: "Prévision indisponible"
                 val temp = top.tempC?.let { " · ${it.roundToInt()} °C au sommet" } ?: ""
                 Text(fall + temp, style = MaterialTheme.typography.bodyMedium)
+            }
+            report?.updatedAt?.let { t ->
+                Text(
+                    "Enneigement mis à jour le " + t.format(DATA_DATE_FORMAT),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
     }

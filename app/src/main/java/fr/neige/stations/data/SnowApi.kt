@@ -10,6 +10,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
 /** Conditions à une altitude donnée. */
@@ -18,9 +19,13 @@ data class LevelData(
     val snowCm: Int?,          // hauteur de neige au sol, en cm
     val tempC: Double?,        // température actuelle
     val snowfall3dCm: Double?, // chutes de neige prévues sur 3 jours, en cm
+    val time: LocalDateTime?,  // date/heure (Europe/Paris) de la valeur de neige
 )
 
-data class SnowReport(val base: LevelData, val mid: LevelData, val top: LevelData)
+data class SnowReport(val base: LevelData, val mid: LevelData, val top: LevelData) {
+    /** Date de mise à jour de l'enneigement fournie par Open-Meteo. */
+    val updatedAt: LocalDateTime? get() = top.time ?: mid.time ?: base.time
+}
 
 private enum class Level { BASE, MID, TOP }
 
@@ -73,6 +78,9 @@ object SnowApi {
             val current = obj?.optJSONObject("current")
             val depthM = current?.optDouble("snow_depth", Double.NaN) ?: Double.NaN
             val temp = current?.optDouble("temperature_2m", Double.NaN) ?: Double.NaN
+            // "time" est au format ISO local, ex. "2026-11-25T18:00"
+            val time = current?.optString("time")?.takeIf { it.isNotBlank() }
+                ?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
             val falls = obj?.optJSONObject("daily")?.optJSONArray("snowfall_sum")
             var sum = 0.0
             var any = false
@@ -85,6 +93,7 @@ object SnowApi {
                 snowCm = if (depthM.isNaN()) null else (depthM * 100).roundToInt().coerceAtLeast(0),
                 tempC = if (temp.isNaN()) null else temp,
                 snowfall3dCm = if (any) sum else null,
+                time = time,
             )
         }
     }

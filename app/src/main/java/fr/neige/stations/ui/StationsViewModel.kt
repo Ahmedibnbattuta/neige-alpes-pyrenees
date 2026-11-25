@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.Normalizer
-import java.time.LocalTime
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 enum class Filter(val label: String) { ALL("Toutes"), ALPES("Alpes"), PYRENEES("Pyrénées"), FAVORITES("Favoris") }
 enum class Sort(val label: String) { SNOW_TOP("Neige au sommet"), SNOW_BASE("Neige en bas"), ALTITUDE("Altitude"), NAME("Nom") }
@@ -85,7 +86,8 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             try {
                 val reports = SnowApi.fetchAll(STATIONS)
-                val now = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+                val now = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("EEEE d MMMM 'à' HH'h'mm", Locale.FRENCH))
                 _state.update { it.copy(reports = reports, loading = false, updatedAt = now) }
             } catch (e: Exception) {
                 _state.update {
