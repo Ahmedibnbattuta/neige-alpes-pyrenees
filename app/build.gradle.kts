@@ -12,8 +12,8 @@ android {
         applicationId = "fr.neige.stations"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.6.1"
+        versionCode = 9
+        versionName = "0.7.0"
     }
 
     // Clé de signature fixe : permet d'installer chaque nouvelle version par-dessus l'ancienne.

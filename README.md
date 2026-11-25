@@ -11,6 +11,8 @@ sur 3 jours et température au sommet.
 - Tri : neige au sommet, neige en bas, altitude, nom
 - Favoris mémorisés sur le téléphone
 - Thème clair / sombre automatique
+- Français et anglais (selon la langue du téléphone)
+- Unités métriques ou américaines (in, ft, °F), bouton en haut de l'écran
 
 ## Source des données
 [Open-Meteo](https://open-meteo.com) — API gratuite, sans clé, licence CC BY 4.0

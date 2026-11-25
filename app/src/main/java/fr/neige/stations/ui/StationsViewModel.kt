@@ -2,8 +2,10 @@ package fr.neige.stations.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.neige.stations.R
 import fr.neige.stations.data.CompareReport
 import fr.neige.stations.data.OfficialReading
 import fr.neige.stations.data.OfficialReadingsStore
@@ -19,13 +21,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.Normalizer
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-enum class Filter(val label: String) { ALL("Toutes"), ALPES("Alpes"), PYRENEES("Pyrénées"), FAVORITES("Favoris") }
-enum class Sort(val label: String) { SNOW_TOP("Neige au sommet"), SNOW_BASE("Neige en bas"), ALTITUDE("Altitude"), NAME("Nom") }
+enum class Filter(@StringRes val labelRes: Int) {
+    ALL(R.string.filter_all), ALPES(R.string.filter_alps), PYRENEES(R.string.filter_pyrenees), FAVORITES(R.string.filter_favorites)
+}
+enum class Sort(@StringRes val labelRes: Int) {
+    SNOW_TOP(R.string.sort_snow_top), SNOW_BASE(R.string.sort_snow_base), ALTITUDE(R.string.sort_altitude), NAME(R.string.sort_name)
+}
 
 data class UiState(
     val query: String = "",
@@ -34,10 +36,11 @@ data class UiState(
     val favorites: Set<String> = emptySet(),
     val reports: Map<String, SnowReport> = emptyMap(),
     val loading: Boolean = false,
-    val error: String? = null,
-    val updatedAt: String? = null,
+    @StringRes val error: Int? = null,
+    val updatedAt: Long? = null,          // ms : moment où les données ont été reçues
+    val units: UnitSystem = UnitSystem.METRIC,
     val readings: List<OfficialReading> = emptyList(),
-    val notice: String? = null,
+    @StringRes val notice: Int? = null,
     val compare: Map<String, CompareUi> = emptyMap(),
 ) {
     fun readingsFor(stationId: String) = readings.filter { it.stationId == stationId }
@@ -52,7 +55,7 @@ data class UiState(
                     Filter.PYRENEES -> s.range == Range.PYRENEES
                     Filter.FAVORITES -> s.id in favorites
                 }
-                val okQuery = q.isEmpty() || listOf(s.name, s.massif, s.country.label)
+                val okQuery = q.isEmpty() || (listOf(s.name, s.massif) + s.country.searchNames)
                     .any { it.normalized().contains(q) }
                 okFilter && okQuery
             }
@@ -69,7 +72,7 @@ data class UiState(
 sealed interface CompareUi {
     data object Loading : CompareUi
     data class Loaded(val report: CompareReport) : CompareUi
-    data class Failed(val message: String) : CompareUi
+    data class Failed(@StringRes val messageRes: Int) : CompareUi
 }
 
 private fun String.normalized(): String =
@@ -83,6 +86,9 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
         UiState(
             favorites = prefs.getStringSet("favorites", emptySet())?.toSet() ?: emptySet(),
             readings = readingsStore.load(),
+            units = prefs.getString("units", null)
+                ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() }
+                ?: UnitSystem.default(),
         )
     )
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -95,6 +101,14 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
     fun setQuery(q: String) = _state.update { it.copy(query = q) }
     fun setFilter(f: Filter) = _state.update { it.copy(filter = f) }
     fun setSort(s: Sort) = _state.update { it.copy(sort = s) }
+
+    fun toggleUnits() {
+        _state.update {
+            val u = if (it.units == UnitSystem.METRIC) UnitSystem.US else UnitSystem.METRIC
+            prefs.edit().putString("units", u.name).apply()
+            it.copy(units = u)
+        }
+    }
 
     fun toggleFavorite(id: String) {
         _state.update {
@@ -131,25 +145,21 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             try {
                 val result = api.fetchAll(STATIONS, maxAgeMs)
-                val at = Instant.ofEpochMilli(result.fetchedAt).atZone(ZoneId.systemDefault())
-                    .format(DateTimeFormatter.ofPattern("EEEE d MMMM 'à' HH'h'mm", Locale.FRENCH))
                 _state.update {
                     it.copy(
                         reports = result.reports,
                         loading = false,
-                        updatedAt = at,
-                        notice = if (result.rateLimited)
-                            "Le service météo limite le nombre de demandes : dernières données reçues affichées. Réessayez dans quelques minutes."
-                        else null,
+                        updatedAt = result.fetchedAt,
+                        notice = if (result.rateLimited) R.string.notice_rate_limited else null,
                     )
                 }
             } catch (e: RateLimitException) {
                 _state.update {
-                    it.copy(loading = false, error = "Le service météo limite le nombre de demandes. Réessayez dans quelques minutes.")
+                    it.copy(loading = false, error = R.string.err_rate_limit)
                 }
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(loading = false, error = "Impossible de charger les données : ${e.message ?: "erreur réseau"}")
+                    it.copy(loading = false, error = R.string.err_load)
                 }
             }
         }
@@ -163,9 +173,9 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
             val ui = try {
                 CompareUi.Loaded(api.fetchCompare(station))
             } catch (e: RateLimitException) {
-                CompareUi.Failed("Trop de demandes, réessayez dans quelques minutes.")
+                CompareUi.Failed(R.string.compare_err_rate)
             } catch (e: Exception) {
-                CompareUi.Failed("Comparaison indisponible pour le moment.")
+                CompareUi.Failed(R.string.compare_err)
             }
             _state.update { it.copy(compare = it.compare + (station.id to ui)) }
         }

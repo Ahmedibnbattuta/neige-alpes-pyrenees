@@ -1,3 +1,94 @@
 <resources>
-    <string name="app_name">Neige Alpes &amp; Pyrénées</string>
+    <!-- English (default language) -->
+    <string name="app_name">Alps &amp; Pyrenees Snow</string>
+
+    <string name="show_list">Show list</string>
+    <string name="show_map">Show map</string>
+    <string name="refresh">Refresh</string>
+    <string name="units_toggle">Switch units</string>
+    <string name="search_hint">Search a resort, area or country</string>
+    <string name="sort_label">Sort:</string>
+
+    <string name="filter_all">All</string>
+    <string name="filter_alps">Alps</string>
+    <string name="filter_pyrenees">Pyrenees</string>
+    <string name="filter_favorites">Favorites</string>
+    <string name="sort_snow_top">Snow at top</string>
+    <string name="sort_snow_base">Snow at base</string>
+    <string name="sort_altitude">Altitude</string>
+    <string name="sort_name">Name</string>
+
+    <string name="range_alps">Alps</string>
+    <string name="range_pyrenees">Pyrenees</string>
+    <string name="country_fr">France</string>
+    <string name="country_ch">Switzerland</string>
+    <string name="country_at">Austria</string>
+    <string name="country_it">Italy</string>
+    <string name="country_de">Germany</string>
+    <string name="country_si">Slovenia</string>
+    <string name="country_es">Spain</string>
+    <string name="country_ad">Andorra</string>
+
+    <plurals name="stations_count">
+        <item quantity="one">%1$d resort</item>
+        <item quantity="other">%1$d resorts</item>
+    </plurals>
+    <string name="refreshed_at"> · updated %1$s</string>
+    <string name="empty_favorites">No favorites yet: tap the heart on a resort to add it.</string>
+    <string name="empty_search">No resort matches your search.</string>
+    <string name="disclaimer">Snow depths are estimated by weather models (Open-Meteo \"best match\" blend) at the altitude shown. They are not the resorts\' official reports. Ski area altitudes are approximate. Data: Open-Meteo.com (CC BY 4.0).</string>
+
+    <string name="add_favorite">Add to favorites</string>
+    <string name="remove_favorite">Remove from favorites</string>
+    <string name="level_base">Base</string>
+    <string name="level_mid">Mid</string>
+    <string name="level_top">Top</string>
+    <string name="forecast_3d">%1$s expected over 3 days</string>
+    <string name="forecast_unavailable">Forecast unavailable</string>
+    <string name="temp_top"> · %1$s at the top</string>
+    <string name="snow_updated">Snow data updated %1$s</string>
+
+    <string name="compare_button">Compare ICON / AROME models</string>
+    <string name="compare_loading">Loading comparison…</string>
+    <string name="compare_title">Model comparison</string>
+    <string name="compare_model">Model</string>
+    <string name="compare_base">Base %1$s</string>
+    <string name="compare_top">Top %1$s</string>
+    <string name="compare_falls">3-day snow</string>
+    <string name="compare_na">n/a</string>
+    <string name="compare_note">n/a: AROME does not publish snow depth on the ground, only expected snowfall. Snowfall is computed at the top.</string>
+    <string name="compare_err_rate">Too many requests, try again in a few minutes.</string>
+    <string name="compare_err">Comparison unavailable right now.</string>
+
+    <string name="readings_title">Official resort reports</string>
+    <string name="add_reading">Add an official report</string>
+    <string name="reading_date">Reported %1$s</string>
+    <string name="edit">Edit</string>
+    <string name="dialog_new">New official report</string>
+    <string name="dialog_edit">Edit report</string>
+    <string name="field_label">Measuring point (e.g. Tignes 2100)</string>
+    <string name="field_altitude">Altitude in %1$s (optional, max %2$d)</string>
+    <string name="field_snow">Snow depth in %1$s (0 to %2$d)</string>
+    <string name="dialog_dated">The report will be dated today (%1$s).</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="err_rate_limit">The weather service limits the number of requests. Try again in a few minutes.</string>
+    <string name="err_load">Unable to load data. Check your connection.</string>
+    <string name="notice_rate_limited">The weather service limits the number of requests: showing the latest data received. Try again in a few minutes.</string>
+
+    <string name="legend_title">Snow at top</string>
+    <string name="legend_unknown">Unknown / &lt; %1$s</string>
+    <string name="legend_range">%1$s to %2$s</string>
+    <string name="legend_plus">%1$s and more</string>
+    <string name="map_base">Base %1$s: %2$s</string>
+    <string name="map_top">Top %1$s: %2$s</string>
+    <string name="map_reading">Report %1$s: %2$s</string>
+    <string name="map_attribution">© OpenStreetMap contributors</string>
+
+    <!-- java.time patterns -->
+    <string name="fmt_data_datetime">EEEE, MMMM d, yyyy \'at\' h:mm a</string>
+    <string name="fmt_refresh_datetime">EEEE, MMMM d \'at\' h:mm a</string>
+    <string name="fmt_date">EEEE, MMMM d, yyyy</string>
 </resources>

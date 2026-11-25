@@ -1,16 +1,20 @@
 package fr.neige.stations.data
 
-enum class Range(val label: String) { ALPES("Alpes"), PYRENEES("Pyrénées") }
+import androidx.annotation.StringRes
+import fr.neige.stations.R
 
-enum class Country(val label: String, val flag: String) {
-    FR("France", "🇫🇷"),
-    CH("Suisse", "🇨🇭"),
-    AT("Autriche", "🇦🇹"),
-    IT("Italie", "🇮🇹"),
-    DE("Allemagne", "🇩🇪"),
-    SI("Slovénie", "🇸🇮"),
-    ES("Espagne", "🇪🇸"),
-    AD("Andorre", "🇦🇩"),
+enum class Range(@StringRes val labelRes: Int) { ALPES(R.string.range_alps), PYRENEES(R.string.range_pyrenees) }
+
+/** [searchNames] : noms français et anglais, pour que la recherche marche dans les deux langues. */
+enum class Country(@StringRes val labelRes: Int, val flag: String, val searchNames: List<String>) {
+    FR(R.string.country_fr, "🇫🇷", listOf("France")),
+    CH(R.string.country_ch, "🇨🇭", listOf("Suisse", "Switzerland")),
+    AT(R.string.country_at, "🇦🇹", listOf("Autriche", "Austria")),
+    IT(R.string.country_it, "🇮🇹", listOf("Italie", "Italy")),
+    DE(R.string.country_de, "🇩🇪", listOf("Allemagne", "Germany")),
+    SI(R.string.country_si, "🇸🇮", listOf("Slovénie", "Slovenia")),
+    ES(R.string.country_es, "🇪🇸", listOf("Espagne", "Spain")),
+    AD(R.string.country_ad, "🇦🇩", listOf("Andorre", "Andorra")),
 }
 
 /**

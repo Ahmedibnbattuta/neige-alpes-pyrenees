@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -40,15 +41,25 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.io.File
 
-/** Couleurs des repères selon la hauteur de neige au sommet. */
+/** Couleurs des repères selon la hauteur de neige au sommet (seuils en cm). */
 private val SNOW_LEVELS = listOf(
-    Triple(0, 0xFF9AA5B1.toInt(), "Inconnue / < 30 cm"),
-    Triple(30, 0xFF7FB3E0.toInt(), "30 à 99 cm"),
-    Triple(100, 0xFF2F7CC4.toInt(), "100 à 199 cm"),
-    Triple(200, 0xFF0B3D6B.toInt(), "200 cm et plus"),
+    0 to 0xFF9AA5B1.toInt(),
+    30 to 0xFF7FB3E0.toInt(),
+    100 to 0xFF2F7CC4.toInt(),
+    200 to 0xFF0B3D6B.toInt(),
 )
 
 private fun colorFor(cm: Int?): Int = SNOW_LEVELS.last { (cm ?: -1) >= it.first || it.first == 0 }.second
+
+@Composable
+private fun legendLabel(index: Int, u: UnitSystem): String {
+    val t = SNOW_LEVELS.map { it.first }
+    return when (index) {
+        0 -> stringResource(R.string.legend_unknown, fmtDepth(t[1], u))
+        SNOW_LEVELS.lastIndex -> stringResource(R.string.legend_plus, fmtDepth(t[index], u))
+        else -> stringResource(R.string.legend_range, fmtDepth(t[index], u), fmtDepth(t[index + 1] - 1, u))
+    }
+}
 
 private fun pin(context: Context, color: Int): Drawable {
     val d = ContextCompat.getDrawable(context, R.drawable.ic_pin)!!.mutate()
@@ -74,6 +85,7 @@ fun StationsMap(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val u = LocalUnits.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
     val mapView = remember {
@@ -114,12 +126,12 @@ fun StationsMap(
                 stations.forEach { s ->
                     val r = reports[s.id]
                     val lines = mutableListOf(
-                        "${s.country.flag} ${s.country.label} · ${s.massif}",
-                        "Bas ${s.baseAlt} m : ${r?.base?.snowCm?.let { "$it cm" } ?: "–"}",
-                        "Sommet ${s.topAlt} m : ${r?.top?.snowCm?.let { "$it cm" } ?: "–"}",
+                        "${s.country.flag} ${context.getString(s.country.labelRes)} · ${s.massif}",
+                        context.getString(R.string.map_base, fmtAlt(s.baseAlt, u), fmtDepth(r?.base?.snowCm, u)),
+                        context.getString(R.string.map_top, fmtAlt(s.topAlt, u), fmtDepth(r?.top?.snowCm, u)),
                     )
                     readings.filter { it.stationId == s.id }.forEach { o ->
-                        lines += "Relevé ${o.label} : ${o.snowCm} cm"
+                        lines += context.getString(R.string.map_reading, o.label, fmtDepth(o.snowCm, u))
                     }
                     map.overlays.add(
                         Marker(map).apply {
@@ -158,8 +170,9 @@ fun StationsMap(
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
                 .padding(8.dp),
         ) {
-            Text("Neige au sommet", style = MaterialTheme.typography.labelMedium)
-            SNOW_LEVELS.forEach { (_, color, label) ->
+            Text(stringResource(R.string.legend_title), style = MaterialTheme.typography.labelMedium)
+            SNOW_LEVELS.forEachIndexed { i, (_, color) ->
+                val label = legendLabel(i, u)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
                     Box(Modifier.size(10.dp).background(Color(color), CircleShape))
                     Text(label, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(start = 6.dp))
@@ -169,7 +182,7 @@ fun StationsMap(
 
         // Attribution obligatoire OpenStreetMap
         Text(
-            "© contributeurs OpenStreetMap",
+            stringResource(R.string.map_attribution),
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
