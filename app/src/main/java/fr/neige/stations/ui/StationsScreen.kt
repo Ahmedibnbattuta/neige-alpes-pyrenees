@@ -52,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import fr.neige.stations.data.OfficialReading
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -163,7 +164,7 @@ fun StationsScreen(vm: StationsViewModel) {
                 }
                 item {
                     Text(
-                        "Hauteurs de neige estimées par modèle météo à l'altitude indiquée (pas des relevés officiels des stations). " +
+                        "Hauteurs de neige estimées par modèle météo (combinaison Open-Meteo « best match ») à l'altitude indiquée (pas des relevés officiels des stations). " +
                             "Altitudes des domaines indicatives. Données : Open-Meteo.com (CC BY 4.0).",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -225,6 +226,9 @@ private fun StationCard(
                 val temp = top.tempC?.let { " · ${it.roundToInt()} °C au sommet" } ?: ""
                 Text(fall + temp, style = MaterialTheme.typography.bodyMedium)
             }
+            if (report != null && (report.icon != null || report.arome != null)) {
+                ModelCompareTable(station, report)
+            }
             report?.updatedAt?.let { t ->
                 Text(
                     "Enneigement mis à jour le " + t.format(DATA_DATE_FORMAT),
@@ -244,6 +248,48 @@ private fun StationCard(
                 Text("Ajouter un relevé officiel", modifier = Modifier.padding(start = 6.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun ModelCompareTable(station: Station, report: SnowReport) {
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Text("Comparaison des modèles", style = MaterialTheme.typography.labelLarge)
+        CompareRow("Modèle", "Bas ${station.baseAlt} m", "Sommet ${station.topAlt} m", "Chutes 3 j", header = true)
+        CompareRow(
+            "ICON (DWD)",
+            cm(report.icon?.base?.snowCm),
+            cm(report.icon?.top?.snowCm),
+            fall(report.icon?.top?.snowfall3dCm),
+        )
+        CompareRow(
+            "AROME (Météo-France)",
+            "n.d.",
+            "n.d.",
+            fall(report.arome?.top?.snowfall3dCm),
+        )
+        Text(
+            "n.d. : AROME ne publie pas la hauteur de neige au sol, seulement les chutes prévues. Chutes calculées au sommet.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
+}
+
+private fun cm(v: Int?) = v?.let { "$it cm" } ?: "–"
+private fun fall(v: Double?) = v?.let { "+${it.roundToInt()} cm" } ?: "–"
+
+@Composable
+private fun CompareRow(model: String, base: String, top: String, falls: String, header: Boolean = false) {
+    val style = if (header) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodyMedium
+    val color = if (header) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+    val weight = if (header) FontWeight.Normal else FontWeight.SemiBold
+    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(model, style = style, color = color, modifier = Modifier.weight(1.4f))
+        Text(base, style = style, color = color, fontWeight = weight, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+        Text(top, style = style, color = color, fontWeight = weight, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+        Text(falls, style = style, color = color, fontWeight = weight, textAlign = TextAlign.End, modifier = Modifier.weight(0.9f))
     }
 }
 

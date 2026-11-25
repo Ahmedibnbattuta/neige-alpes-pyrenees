@@ -22,12 +22,27 @@ data class LevelData(
     val time: LocalDateTime?,  // date/heure (Europe/Paris) de la valeur de neige
 )
 
-data class SnowReport(val base: LevelData, val mid: LevelData, val top: LevelData) {
+/** Valeurs d'un modèle météo précis, en bas et au sommet du domaine. */
+data class ModelData(val base: LevelData?, val top: LevelData?)
+
+data class SnowReport(
+    val base: LevelData,
+    val mid: LevelData,
+    val top: LevelData,
+    val icon: ModelData? = null,   // DWD ICON : hauteur de neige + chutes prévues
+    val arome: ModelData? = null,  // Météo-France AROME : chutes prévues uniquement
+) {
     /** Date de mise à jour de l'enneigement fournie par Open-Meteo. */
     val updatedAt: LocalDateTime? get() = top.time ?: mid.time ?: base.time
 }
 
 private enum class Level { BASE, MID, TOP }
+
+/** Modèles comparés. AROME ne fournit pas la hauteur de neige au sol sur Open-Meteo. */
+private enum class Model(val id: String, val hasSnowDepth: Boolean) {
+    ICON("icon_seamless", true),
+    AROME("meteofrance_seamless", false),
+}
 
 /**
  * Récupère la hauteur de neige modélisée via l'API gratuite Open-Meteo
@@ -37,16 +52,32 @@ private enum class Level { BASE, MID, TOP }
 object SnowApi {
 
     suspend fun fetchAll(stations: List<Station>): Map<String, SnowReport> = withContext(Dispatchers.IO) {
-        val results = coroutineScope {
-            Level.entries.map { level -> async { level to fetchLevel(stations, level) } }.awaitAll()
-        }.toMap()
+        coroutineScope {
+            val main = Level.entries.map { level -> async { level to fetchLevel(stations, level, null) } }
+            // Comparaison des modèles : bas et sommet. Un échec ici ne bloque pas l'affichage principal.
+            val compare = Model.entries.flatMap { m ->
+                listOf(Level.BASE, Level.TOP).map { level ->
+                    async { (m to level) to runCatching { fetchLevel(stations, level, m) }.getOrNull() }
+                }
+            }
+            val results = main.awaitAll().toMap()
+            val cmp = compare.awaitAll().toMap()
 
-        stations.indices.associate { i ->
-            stations[i].id to SnowReport(
-                base = results.getValue(Level.BASE)[i],
-                mid = results.getValue(Level.MID)[i],
-                top = results.getValue(Level.TOP)[i],
-            )
+            fun modelData(m: Model, i: Int): ModelData? {
+                val b = cmp[m to Level.BASE]?.getOrNull(i)
+                val t = cmp[m to Level.TOP]?.getOrNull(i)
+                return if (b == null && t == null) null else ModelData(b, t)
+            }
+
+            stations.indices.associate { i ->
+                stations[i].id to SnowReport(
+                    base = results.getValue(Level.BASE)[i],
+                    mid = results.getValue(Level.MID)[i],
+                    top = results.getValue(Level.TOP)[i],
+                    icon = modelData(Model.ICON, i),
+                    arome = modelData(Model.AROME, i),
+                )
+            }
         }
     }
 
@@ -56,14 +87,16 @@ object SnowApi {
         Level.TOP -> s.topAlt
     }
 
-    private fun fetchLevel(stations: List<Station>, level: Level): List<LevelData> {
+    private fun fetchLevel(stations: List<Station>, level: Level, model: Model?): List<LevelData> {
         val lats = stations.joinToString(",") { it.lat.toString() }
         val lons = stations.joinToString(",") { it.lon.toString() }
         val elevs = stations.joinToString(",") { altitudeOf(it, level).toString() }
+        val current = if (model == null || model.hasSnowDepth) "snow_depth,temperature_2m" else "temperature_2m"
         val url = "https://api.open-meteo.com/v1/forecast" +
             "?latitude=$lats&longitude=$lons&elevation=$elevs" +
-            "&current=snow_depth,temperature_2m" +
+            "&current=$current" +
             "&daily=snowfall_sum&forecast_days=3" +
+            (model?.let { "&models=${it.id}" } ?: "") +
             "&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
 
         val body = httpGet(url).trim()
