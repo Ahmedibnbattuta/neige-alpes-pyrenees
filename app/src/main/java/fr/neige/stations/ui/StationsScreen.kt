@@ -281,7 +281,6 @@ private fun StationCard(
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 LevelColumn(stringResource(R.string.level_base), station.baseAlt, report?.base, Modifier.weight(1f))
-                LevelColumn(stringResource(R.string.level_mid), station.midAlt, report?.mid, Modifier.weight(1f))
                 LevelColumn(stringResource(R.string.level_top), station.topAlt, report?.top, Modifier.weight(1f))
             }
             report?.top?.let { top ->

@@ -26,11 +26,11 @@ data class ModelData(val base: LevelData?, val top: LevelData?)
 
 data class SnowReport(
     val base: LevelData,
-    val mid: LevelData,
     val top: LevelData,
+    val mid: LevelData? = null,
 ) {
     /** Date de mise à jour de l'enneigement fournie par Open-Meteo. */
-    val updatedAt: LocalDateTime? get() = top.time ?: mid.time ?: base.time
+    val updatedAt: LocalDateTime? get() = top.time ?: base.time
 }
 
 /** Comparaison des modèles pour une station, chargée à la demande. */
@@ -71,9 +71,9 @@ class SnowApi(cacheRoot: File) {
 
     private val cacheDir = File(cacheRoot, "meteo").apply { mkdirs() }
 
-    /** Liste principale : 3 requêtes (bas, milieu, sommet) pour toutes les stations. */
+    /** Liste principale : 2 requêtes (bas et sommet) pour toutes les stations. */
     suspend fun fetchAll(stations: List<Station>, maxAgeMs: Long): FetchResult = withContext(Dispatchers.IO) {
-        val urls = Level.entries.associateWith { level ->
+        val urls = listOf(Level.BASE, Level.TOP).associateWith { level ->
             buildUrl(stations.map { Point(it.lat, it.lon, altitudeOf(it, level)) }, null)
         }
         var rateLimited = false
@@ -90,7 +90,6 @@ class SnowApi(cacheRoot: File) {
         val reports = stations.indices.associate { i ->
             stations[i].id to SnowReport(
                 base = parsed.getValue(Level.BASE)[i],
-                mid = parsed.getValue(Level.MID)[i],
                 top = parsed.getValue(Level.TOP)[i],
             )
         }

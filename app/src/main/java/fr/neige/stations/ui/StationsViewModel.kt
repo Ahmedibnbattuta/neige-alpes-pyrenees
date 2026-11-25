@@ -95,7 +95,7 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
 
     private val api = SnowApi(app.cacheDir)
 
-    // Au démarrage, des données de moins de 30 min sont réutilisées sans appeler le serveur.
+    // Au démarrage, des données de moins d'1 h sont réutilisées (Open-Meteo met à jour toutes les heures).
     init { load(AUTO_MAX_AGE_MS) }
 
     fun setQuery(q: String) = _state.update { it.copy(query = q) }
@@ -136,7 +136,7 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Bouton Actualiser : redemande au serveur si les données ont plus de 10 min. */
+    /** Bouton Actualiser : redemande au serveur si les données ont plus de 15 min. */
     fun refresh() = load(MANUAL_MAX_AGE_MS)
 
     private fun load(maxAgeMs: Long) {
@@ -182,7 +182,7 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private companion object {
-        const val AUTO_MAX_AGE_MS = 30 * 60_000L
-        const val MANUAL_MAX_AGE_MS = 10 * 60_000L
+        const val AUTO_MAX_AGE_MS = 60 * 60_000L
+        const val MANUAL_MAX_AGE_MS = 15 * 60_000L
     }
 }
