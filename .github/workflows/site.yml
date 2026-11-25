@@ -21,12 +21,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  # 1. Calcul de la neige et préparation du site
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,5 +40,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
+
+  # 2. Publication (étape séparée : le fichier préparé est alors bien enregistré par GitHub)
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
