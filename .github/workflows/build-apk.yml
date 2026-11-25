@@ -21,9 +21,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       # Vérifie que gradle-wrapper.jar est authentique (protection contre un wrapper piégé).
-      - uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/wrapper-validation@v6
       # Tests automatiques : la compilation s'arrête si un test échoue.
       - run: chmod +x gradlew && ./gradlew testDebugUnitTest
       # Clé de signature définitive, si les secrets GitHub sont définis (sinon : clé de test du dépôt).
