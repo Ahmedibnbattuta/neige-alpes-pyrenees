@@ -61,7 +61,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release delete-asset latest NeigeAlpesPyrenees.apk.sha256 -y -R "$GITHUB_REPOSITORY" || true
       # Publie l'APK en téléchargement direct (page « Releases » du dépôt)
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: latest
