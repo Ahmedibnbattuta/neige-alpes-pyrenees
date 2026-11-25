@@ -32,12 +32,17 @@ PAUSE_BETWEEN_BATCHES = 62  # secondes
 # ---------------------------------------------------------------------------
 # Modèle de manteau neigeux (pas journalier)
 # ---------------------------------------------------------------------------
-SNOW_ALL_BELOW = 0.0     # °C : en dessous, toute la précipitation tombe en neige
-RAIN_ALL_ABOVE = 2.5     # °C : au-dessus, tout tombe en pluie
-DDF = 3.5                # mm d'équivalent eau fondus par °C au-dessus de 0 (moyenne journalière) et par jour
-NEW_SNOW_DENSITY = 0.10  # neige fraîche : 10 cm de neige pour 1 cm d'eau
-SETTLED_DENSITY = 0.38   # densité vers laquelle le manteau se tasse
-SETTLE_RATE = 0.07       # part de l'excès d'épaisseur résorbée chaque jour
+# Réglages du modèle (calibrés avec tools/calibrate.py sur des relevés officiels de stations).
+PARAMS = {
+    "snow_below": 0.0,     # °C (moyenne journalière) : en dessous, toute la précipitation tombe en neige
+    "rain_above": 2.5,     # °C : au-dessus, tout tombe en pluie
+    "ddf": 3.5,            # mm d'eau fondus par °C au-dessus de 0 et par jour (fonte degré-jour)
+    "new_density": 0.10,   # densité de la neige fraîche (0,10 = 10 cm de neige pour 1 cm d'eau)
+    "settled": 0.38,       # densité vers laquelle le manteau se tasse
+    "settle_rate": 0.07,   # part de l'excès d'épaisseur résorbée chaque jour
+    "precip_factor": 1.0,  # correction globale des précipitations du modèle (vent, sublimation…)
+}
+MODEL_VERSION = 2  # à incrémenter quand les réglages changent : force un recalcul complet
 
 
 def season_start(today: date) -> date:
@@ -48,34 +53,34 @@ def season_start(today: date) -> date:
     return date(y, 10, 1)
 
 
-def step(state, tmax, tmin, precip_mm):
+def step(state, tmax, tmin, precip_mm, P=None):
     """Avance l'état d'un jour. state = {"swe": mm d'eau, "depth": mm de neige}."""
+    P = P or PARAMS
     swe, depth = state["swe"], state["depth"]
     if tmax is None or tmin is None:
         return {"swe": swe, "depth": depth}
     tmean = (tmax + tmin) / 2.0
-    p = max(0.0, precip_mm or 0.0)
+    p = max(0.0, precip_mm or 0.0) * P["precip_factor"]
     # Part de neige
-    if tmean <= SNOW_ALL_BELOW:
+    if tmean <= P["snow_below"]:
         frac = 1.0
-    elif tmean >= RAIN_ALL_ABOVE:
+    elif tmean >= P["rain_above"]:
         frac = 0.0
     else:
-        frac = (RAIN_ALL_ABOVE - tmean) / (RAIN_ALL_ABOVE - SNOW_ALL_BELOW)
+        frac = (P["rain_above"] - tmean) / (P["rain_above"] - P["snow_below"])
     snow_we = p * frac
     swe += snow_we
-    depth += snow_we / NEW_SNOW_DENSITY
-    # Fonte (degré-jour) ; la pluie sur la neige fait un peu fondre aussi
-    melt = DDF * max(0.0, tmean) + 0.0125 * p * (1 - frac) * max(0.0, tmean)
-    melt = min(melt, swe)
+    depth += snow_we / P["new_density"]
+    # Fonte (degré-jour)
+    melt = min(P["ddf"] * max(0.0, tmean), swe)
     if swe > 0:
         depth *= (swe - melt) / swe
     swe -= melt
     # Tassement vers la densité d'un manteau ancien
     if swe > 0.01:
-        settled = swe / SETTLED_DENSITY
+        settled = swe / P["settled"]
         if depth > settled:
-            depth = settled + (depth - settled) * (1 - SETTLE_RATE)
+            depth = settled + (depth - settled) * (1 - P["settle_rate"])
     else:
         swe, depth = 0.0, 0.0
     return {"swe": round(swe, 2), "depth": round(depth, 1)}
@@ -156,9 +161,16 @@ def main(stations_path, out_path, previous_url=None):
             print("État précédent chargé :", prev.get("generated"))
         except Exception as e:
             print("Pas d'état précédent :", e)
-    if prev.get("seasonStart") != start.isoformat():
-        prev = {}  # nouvelle saison
+    if prev.get("seasonStart") != start.isoformat() or prev.get("modelVersion") != MODEL_VERSION:
+        prev = {}  # nouvelle saison ou nouveaux réglages : recalcul complet
     prev_state = prev.get("state", {})
+    # Un point dont l'altitude a changé (liste des stations modifiée) repart de zéro
+    for s_ in stations:
+        for lv in LEVELS:
+            k = f"{s_['id']}|{lv}"
+            a = s_["baseAlt"] if lv == "base" else s_["topAlt"] if lv == "top" else (s_["baseAlt"] + s_["topAlt"]) // 2
+            if k in prev_state and prev_state[k].get("alt") != a:
+                del prev_state[k]
 
     alt = lambda s, lv: s["baseAlt"] if lv == "base" else s["topAlt"] if lv == "top" else (s["baseAlt"] + s["topAlt"]) // 2
     keys = [(s, lv) for s in stations for lv in LEVELS]
@@ -202,7 +214,7 @@ def main(stations_path, out_path, previous_url=None):
                 continue
             state = step(state, tmax, tmin, p)
             if dd == yesterday:
-                new_state[k] = {"date": d, **state}
+                new_state[k] = {"date": d, "alt": alt(s, lv), **state}
             if dd >= today:
                 days_out.append({"d": d, "depth": depth_cm(state),
                                  "snowfall": None if sf is None else round(sf, 1),
@@ -215,7 +227,7 @@ def main(stations_path, out_path, previous_url=None):
     # Même date l'an dernier (bas et sommet), recalculée une fois par jour seulement.
     last_year = today.replace(year=today.year - 1) if not (today.month == 2 and today.day == 29) else today - timedelta(days=366)
     ly = prev.get("lastYear", {})
-    if prev.get("lastYearDate") != last_year.isoformat() or not ly:
+    if prev.get("lastYearDate") != last_year.isoformat() or not ly or prev.get("modelVersion") != MODEL_VERSION:
         print("Calcul de la même date l'an dernier…")
         ly_start = season_start(last_year)
         lpts = [(s["lat"], s["lon"], alt(s, lv)) for s in stations for lv in ("base", "top")]
@@ -234,6 +246,7 @@ def main(stations_path, out_path, previous_url=None):
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "today": today.isoformat(),
         "seasonStart": start.isoformat(),
+        "modelVersion": MODEL_VERSION,
         "lastYearDate": last_year.isoformat(),
         "source": "Open-Meteo (CC BY 4.0) ; manteau neigeux simulé par altitude depuis le début de saison",
         "stations": result,
