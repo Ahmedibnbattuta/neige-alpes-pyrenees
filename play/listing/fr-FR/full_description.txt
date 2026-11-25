@@ -1,0 +1,26 @@
+Combien de neige y a-t-il en ce moment dans votre station ? Neige Alpes & Pyrénées affiche la hauteur de neige en centimètres, en bas et au sommet de 153 stations de ski des Alpes (France, Suisse, Autriche, Italie, Allemagne, Slovénie) et des Pyrénées (France, Espagne, Andorre).
+
+EN UN COUP D'ŒIL
+• Hauteur de neige au bas et au sommet de chaque domaine, à l'altitude exacte
+• Chutes de neige prévues sur 3 jours et température au sommet
+• Recherche, filtres Alpes / Pyrénées / Favoris, tri par enneigement ou altitude
+• Carte des stations, repères colorés selon la neige au sommet
+
+FICHE DÉTAILLÉE
+• Graphique de la hauteur de neige sur 7 jours (bas, milieu, sommet)
+• Chutes de neige, pluie, températures, rafales et isotherme 0 °C, jour par jour
+• Comparaison avec la même date l'an dernier
+• Comparaison des modèles ICON (DWD) et AROME (Météo-France)
+• Liens vers le bulletin neige officiel, les webcams et le bulletin avalanche
+
+POUR LES HABITUÉS
+• Alertes neige fraîche sur vos stations favorites, avec seuil réglable
+• Widget d'écran d'accueil avec la neige de vos favoris
+• Relevés officiels saisis par vous (ex. Tignes 2100), datés automatiquement
+• Unités métriques ou américaines (cm/in, m/ft, °C/°F)
+• Français et anglais
+
+TRANSPARENCE
+Les hauteurs de neige sont des estimations de modèles météo (Open-Meteo, licence CC BY 4.0), pas les relevés officiels des stations. Vérifiez toujours le bulletin de la station et le bulletin avalanche avant de partir.
+
+Aucun compte, aucune publicité, aucune donnée personnelle collectée.

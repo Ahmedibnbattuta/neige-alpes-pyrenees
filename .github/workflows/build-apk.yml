@@ -26,15 +26,35 @@ jobs:
       - uses: gradle/actions/wrapper-validation@v4
       # Tests automatiques : la compilation s'arrête si un test échoue.
       - run: chmod +x gradlew && ./gradlew testDebugUnitTest
-      - run: ./gradlew assembleRelease
-      - run: cp app/build/outputs/apk/release/app-release.apk NeigeAlpesPyrenees.apk
-      - run: sha256sum NeigeAlpesPyrenees.apk | tee NeigeAlpesPyrenees.apk.sha256
+      # Clé de signature définitive, si les secrets GitHub sont définis (sinon : clé de test du dépôt).
+      - name: Clé de signature
+        env:
+          KEYSTORE_B64: ${{ secrets.NEIGE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/neige-release.keystore"
+            echo "NEIGE_KEYSTORE_PATH=$RUNNER_TEMP/neige-release.keystore" >> "$GITHUB_ENV"
+            echo "Signature : clé définitive (secrets GitHub)"
+          else
+            echo "Signature : clé de test du dépôt"
+          fi
+      - run: ./gradlew assembleRelease bundleRelease
+        env:
+          NEIGE_KEYSTORE_PASSWORD: ${{ secrets.NEIGE_KEYSTORE_PASSWORD }}
+          NEIGE_KEY_ALIAS: ${{ secrets.NEIGE_KEY_ALIAS }}
+          NEIGE_KEY_PASSWORD: ${{ secrets.NEIGE_KEY_PASSWORD }}
+      - run: |
+          cp app/build/outputs/apk/release/app-release.apk NeigeAlpesPyrenees.apk
+          cp app/build/outputs/bundle/release/app-release.aab NeigeAlpesPyrenees.aab
+          sha256sum NeigeAlpesPyrenees.apk NeigeAlpesPyrenees.aab | tee SHA256SUMS.txt
+          rm -f "$RUNNER_TEMP/neige-release.keystore"
       - uses: actions/upload-artifact@v4
         with:
           name: neige-alpes-pyrenees-apk
           path: |
             NeigeAlpesPyrenees.apk
-            NeigeAlpesPyrenees.apk.sha256
+            NeigeAlpesPyrenees.aab
+            SHA256SUMS.txt
       # Publie l'APK en téléchargement direct (page « Releases » du dépôt)
       - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
@@ -44,5 +64,6 @@ jobs:
           body: "APK compilé automatiquement depuis le commit ${{ github.sha }}."
           files: |
             NeigeAlpesPyrenees.apk
-            NeigeAlpesPyrenees.apk.sha256
+            NeigeAlpesPyrenees.aab
+            SHA256SUMS.txt
           make_latest: true

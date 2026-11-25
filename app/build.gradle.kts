@@ -6,24 +6,27 @@ plugins {
 
 android {
     namespace = "fr.neige.stations"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "fr.neige.stations"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 12
-        versionName = "0.10.0"
+        targetSdk = 36
+        versionCode = 13
+        versionName = "0.11.0"
     }
 
     // Clé de signature fixe : permet d'installer chaque nouvelle version par-dessus l'ancienne.
-    // Si les variables NEIGE_KEYSTORE_* sont définies (secrets GitHub), elles remplacent la clé du dépôt.
+    // Si les secrets GitHub NEIGE_* sont définis, ils remplacent la clé de test du dépôt
+    // (clé définitive pour le Play Store). Une variable vide compte comme absente.
+    fun env(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
+    val releaseKey = env("NEIGE_KEYSTORE_PATH")
     signingConfigs {
         create("neige") {
-            storeFile = file(System.getenv("NEIGE_KEYSTORE_PATH") ?: "neige-debug.keystore")
-            storePassword = System.getenv("NEIGE_KEYSTORE_PASSWORD") ?: "android"
-            keyAlias = System.getenv("NEIGE_KEY_ALIAS") ?: "androiddebugkey"
-            keyPassword = System.getenv("NEIGE_KEY_PASSWORD") ?: "android"
+            storeFile = file(releaseKey ?: "neige-debug.keystore")
+            storePassword = if (releaseKey != null) env("NEIGE_KEYSTORE_PASSWORD") else "android"
+            keyAlias = if (releaseKey != null) env("NEIGE_KEY_ALIAS") else "androiddebugkey"
+            keyPassword = if (releaseKey != null) env("NEIGE_KEY_PASSWORD") else "android"
         }
     }
 

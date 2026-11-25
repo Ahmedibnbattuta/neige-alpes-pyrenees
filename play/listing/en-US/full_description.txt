@@ -1,0 +1,26 @@
+How much snow is there at your resort right now? Alps & Pyrenees Snow shows snow depth at the base and at the top of 153 ski resorts in the Alps (France, Switzerland, Austria, Italy, Germany, Slovenia) and the Pyrenees (France, Spain, Andorra).
+
+AT A GLANCE
+• Snow depth at the base and at the top of each ski area, at the exact altitude
+• 3-day snowfall forecast and temperature at the top
+• Search, Alps / Pyrenees / Favorites filters, sort by snow or altitude
+• Resort map with markers colored by snow at the top
+
+DETAILED VIEW
+• 7-day snow depth chart (base, mid, top)
+• Snowfall, rain, temperatures, gusts and freezing level, day by day
+• Comparison with the same date last year
+• ICON (DWD) vs AROME (Météo-France) model comparison
+• Links to the official snow report, webcams and avalanche bulletin
+
+FOR REGULARS
+• Fresh snow alerts for your favorite resorts, with an adjustable threshold
+• Home screen widget showing snow at your favorites
+• Official reports you enter yourself (e.g. Tignes 2100), dated automatically
+• Metric or US units (cm/in, m/ft, °C/°F)
+• English and French
+
+TRANSPARENCY
+Snow depths are weather model estimates (Open-Meteo, CC BY 4.0 licence), not the resorts' official reports. Always check the resort's snow report and the avalanche bulletin before you go.
+
+No account, no ads, no personal data collected.
