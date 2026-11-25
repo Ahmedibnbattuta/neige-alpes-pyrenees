@@ -121,4 +121,10 @@
     <string name="widget_desc">Neve in vetta alle tue stazioni preferite.</string>
     <string name="menu_language">Lingua</string>
     <string name="language_title">Lingua</string>
+
+    <!-- Top 10 -->
+    <string name="show_top10">Mostra la top 10</string>
+    <string name="top10_top">Più innevate in vetta</string>
+    <string name="top10_base">Più innevate a valle</string>
+    <string name="top10_empty">Ancora nessun dato sulla neve: aggiorna tra un attimo.</string>
 </resources>

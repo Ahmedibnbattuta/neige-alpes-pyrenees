@@ -138,4 +138,10 @@
     <!-- Langue -->
     <string name="menu_language">Language</string>
     <string name="language_title">Language</string>
+
+    <!-- Top 10 -->
+    <string name="show_top10">Show top 10</string>
+    <string name="top10_top">Snowiest at the top</string>
+    <string name="top10_base">Snowiest at the base</string>
+    <string name="top10_empty">No snow data yet: refresh in a moment.</string>
 </resources>

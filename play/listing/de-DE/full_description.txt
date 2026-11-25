@@ -1,0 +1,27 @@
+Wie viel Schnee liegt gerade in deinem Skigebiet? Schnee Alpen & Pyrenäen zeigt die Schneehöhe im Tal und am Berg von 153 Skigebieten in den Alpen (Frankreich, Schweiz, Österreich, Italien, Deutschland, Slowenien) und den Pyrenäen (Frankreich, Spanien, Andorra).
+
+AUF EINEN BLICK
+• Schneehöhe im Tal und am Berg jedes Skigebiets, auf der genauen Höhe
+• Neuschneeprognose für 3 Tage und Temperatur am Berg
+• Top 10 der schneereichsten Skigebiete, im Tal und am Berg
+• Suche, Filter Alpen / Pyrenäen / Favoriten, Sortierung nach Schnee oder Höhe
+• Karte der Skigebiete mit farbigen Markierungen je nach Schnee am Berg
+
+DETAILANSICHT
+• Diagramm der Schneehöhe über 7 Tage (Tal, Mitte, Berg)
+• Neuschnee, Regen, Temperaturen, Böen und Nullgradgrenze, Tag für Tag
+• Vergleich mit demselben Datum im Vorjahr
+• Vergleich der Modelle ICON (DWD) und AROME (Météo-France)
+• Links zum offiziellen Schneebericht, zu Webcams und zum Lawinenlagebericht
+
+FÜR STAMMGÄSTE
+• Neuschnee-Alarme für deine Favoriten, mit einstellbarem Schwellenwert
+• Startbildschirm-Widget mit dem Schnee deiner Favoriten
+• Offizielle Schneeberichte, die du selbst einträgst, automatisch datiert
+• Metrische oder US-Einheiten (cm/in, m/ft, °C/°F)
+• Englisch, Französisch, Italienisch und Deutsch
+
+TRANSPARENZ
+Die Schneehöhen sind Schätzungen von Wettermodellen (Open-Meteo, Lizenz CC BY 4.0), nicht die offiziellen Schneeberichte der Skigebiete. Prüfe vor der Abfahrt immer den Schneebericht des Skigebiets und den Lawinenlagebericht.
+
+Kein Konto, keine Werbung, keine Erhebung personenbezogener Daten.

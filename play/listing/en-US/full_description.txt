@@ -3,6 +3,7 @@ How much snow is there at your resort right now? Alps & Pyrenees Snow shows snow
 AT A GLANCE
 • Snow depth at the base and at the top of each ski area, at the exact altitude
 • 3-day snowfall forecast and temperature at the top
+• Top 10 snowiest resorts, at the base and at the top
 • Search, Alps / Pyrenees / Favorites filters, sort by snow or altitude
 • Resort map with markers colored by snow at the top
 
@@ -18,7 +19,7 @@ FOR REGULARS
 • Home screen widget showing snow at your favorites
 • Official reports you enter yourself (e.g. Tignes 2100), dated automatically
 • Metric or US units (cm/in, m/ft, °C/°F)
-• English and French
+• English, French, Italian and German
 
 TRANSPARENCY
 Snow depths are weather model estimates (Open-Meteo, CC BY 4.0 licence), not the resorts' official reports. Always check the resort's snow report and the avalanche bulletin before you go.

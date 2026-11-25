@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -96,6 +97,7 @@ fun StationsScreen(vm: StationsViewModel) {
     val stations = state.visible
     var editing by remember { mutableStateOf<OfficialReading?>(null) }
     var showMap by rememberSaveable { mutableStateOf(false) }
+    var showTop by rememberSaveable { mutableStateOf(false) }
     var detailId by rememberSaveable { mutableStateOf<String?>(null) }
     var showAlerts by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
@@ -151,7 +153,13 @@ fun StationsScreen(vm: StationsViewModel) {
                                 modifier = Modifier.padding(0.dp),
                             )
                         }
-                        IconButton(onClick = { showMap = !showMap }) {
+                        IconButton(onClick = { showTop = !showTop; if (showTop) showMap = false }) {
+                            Icon(
+                                if (showTop) Icons.AutoMirrored.Filled.List else Icons.Default.Star,
+                                contentDescription = stringResource(if (showTop) R.string.show_list else R.string.show_top10),
+                            )
+                        }
+                        IconButton(onClick = { showMap = !showMap; if (showMap) showTop = false }) {
                             Icon(
                                 if (showMap) Icons.AutoMirrored.Filled.List else Icons.Default.Place,
                                 contentDescription = stringResource(if (showMap) R.string.show_list else R.string.show_map),
@@ -198,7 +206,7 @@ fun StationsScreen(vm: StationsViewModel) {
                         FilterChip(selected = state.filter == f, onClick = { vm.setFilter(f) }, label = { Text(stringResource(f.labelRes)) })
                     }
                 }
-                if (!showMap) ChipRow {
+                if (!showMap && !showTop) ChipRow {
                     Text(
                         stringResource(R.string.sort_label),
                         style = MaterialTheme.typography.labelLarge,
@@ -221,7 +229,14 @@ fun StationsScreen(vm: StationsViewModel) {
                     )
                 }
 
-                if (showMap) {
+                if (showTop) {
+                    Top10View(
+                        stations = stations,
+                        reports = state.reports,
+                        onOpen = { s -> vm.openDetail(s); detailId = s.id },
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                } else if (showMap) {
                     StationsMap(
                         stations = stations,
                         reports = state.reports,

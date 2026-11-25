@@ -121,4 +121,10 @@
     <string name="widget_desc">Schnee am Berg deiner Lieblings-Skigebiete.</string>
     <string name="menu_language">Sprache</string>
     <string name="language_title">Sprache</string>
+
+    <!-- Top 10 -->
+    <string name="show_top10">Top 10 anzeigen</string>
+    <string name="top10_top">Meister Schnee am Berg</string>
+    <string name="top10_base">Meister Schnee im Tal</string>
+    <string name="top10_empty">Noch keine Schneedaten: Aktualisiere gleich noch einmal.</string>
 </resources>

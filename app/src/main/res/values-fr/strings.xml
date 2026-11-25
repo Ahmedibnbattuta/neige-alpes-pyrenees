@@ -138,4 +138,10 @@
     <!-- Langue -->
     <string name="menu_language">Langue</string>
     <string name="language_title">Langue</string>
+
+    <!-- Top 10 -->
+    <string name="show_top10">Afficher le top 10</string>
+    <string name="top10_top">Plus enneigées au sommet</string>
+    <string name="top10_base">Plus enneigées en bas</string>
+    <string name="top10_empty">Pas encore de données de neige : actualisez dans un instant.</string>
 </resources>

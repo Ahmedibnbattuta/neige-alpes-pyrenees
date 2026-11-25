@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -51,6 +51,18 @@ main{max-width:1240px;margin:auto;padding:16px max(5vw,16px) 48px}
 .gauge{height:4px;width:100%;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden}.gauge i{display:block;height:100%;background:currentColor}
 .fall{text-align:right;font-weight:600;white-space:nowrap}
 .fall small{display:block;font-weight:400}
+.top10{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:0 0 24px}
+.top10 section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.top10 h2{font-size:18px;margin:0 0 8px}
+.top10 ol{list-style:none;margin:0;padding:0;counter-reset:r}
+.top10 li{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);counter-increment:r}
+.top10 li:first-child{border-top:0}
+.top10 li::before{content:counter(r);font:800 18px/1 Archivo,sans-serif;color:var(--muted)}
+.top10 li:nth-child(-n+3)::before{color:var(--red)}
+.top10 .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top10 .v{font:800 17px Archivo,sans-serif;color:var(--glacier);white-space:nowrap}
+.top10 small{display:block;color:var(--muted);font-size:13px}
+@media(max-width:700px){.top10{grid-template-columns:minmax(0,1fr)}}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:24px max(5vw,16px)}
 footer div{max-width:1240px;margin:auto}
 a{color:var(--glacier)}
@@ -87,10 +99,15 @@ a{color:var(--glacier)}
     <option value="name">Nom</option>
   </select>
   <button id="units" aria-pressed="false">cm · m</button>
+  <select id="lang" aria-label="Language / Langue / Lingua / Sprache"></select>
 </div></div>
 
 <main>
   <p class="meta" id="meta">Chargement des données…</p>
+  <div class="top10">
+    <section><h2 id="t-top-top">Top 10 · sommet</h2><ol id="top-top"></ol></section>
+    <section><h2 id="t-top-base">Top 10 · bas</h2><ol id="top-base"></ol></section>
+  </div>
   <div class="rows" id="rows"></div>
 </main>
 
@@ -102,30 +119,66 @@ a{color:var(--glacier)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 {
-const FR = (navigator.language || 'fr').toLowerCase().startsWith('fr');
-const T = FR ? {
-  loading:'Chargement des données…', updated:'Données du ', err:'Données météo indisponibles pour le moment. Réessayez dans quelques minutes.',
-  base:'Bas', top:'Sommet', fall:'3 jours', none:'Aucune station ne correspond à votre recherche.',
-  countries:{FR:'France',CH:'Suisse',AT:'Autriche',IT:'Italie',DE:'Allemagne',SI:'Slovénie',ES:'Espagne',AD:'Andorre'},
-  ranges:{ALPES:'Alpes',PYRENEES:'Pyrénées'}, est:'altitudes estimées'
-} : {
-  loading:'Loading data…', updated:'Data from ', err:'Weather data unavailable right now. Try again in a few minutes.',
-  base:'Base', top:'Top', fall:'3 days', none:'No resort matches your search.',
-  countries:{FR:'France',CH:'Switzerland',AT:'Austria',IT:'Italy',DE:'Germany',SI:'Slovenia',ES:'Spain',AD:'Andorra'},
-  ranges:{ALPES:'Alps',PYRENEES:'Pyrenees'}, est:'estimated altitudes'
+// --- Langues : anglais par défaut, français / italien / allemand selon le navigateur ou le choix mémorisé ---
+const LANGS = {
+  en: { locale:'en-US', name:'English',
+    loading:'Loading data…', updated:'Data from ', err:'Weather data unavailable right now. Try again in a few minutes.',
+    base:'Base', top:'Top', fall:'3 days', none:'No resort matches your search.', est:'estimated altitudes',
+    countries:{FR:'France',CH:'Switzerland',AT:'Austria',IT:'Italy',DE:'Germany',SI:'Slovenia',ES:'Spain',AD:'Andorra'},
+    ranges:{ALPES:'Alps',PYRENEES:'Pyrenees'}, search:'Search a resort, area or country', sorts:['Snow at top','Snow at base','Altitude','Name'],
+    ui:{'t-title':'Alps & Pyrenees Snow','t-lead':'Snow depth at the base and at the top of 153 resorts, estimated at the exact altitude of each ski area and updated hourly.',
+      't-stations':'resorts','t-max':'deepest at the top','t-fall':'3-day snowfall (max)','f-ALL':'All','f-ALPES':'Alps','f-PYRENEES':'Pyrenees',
+      't-note':"Snow depths are weather model estimates (Open-Meteo, CC BY 4.0), not the resorts' official reports. Always check the resort snow report and the avalanche bulletin before you go. Ski area altitudes: skiresort.info. Map © OpenStreetMap contributors.",
+      't-top-top':'Top 10 · snowiest at the top','t-top-base':'Top 10 · snowiest at the base',
+      't-privacy':'Privacy policy','t-app':'Also available as an Android app.'} },
+  fr: { locale:'fr-FR', name:'Français',
+    loading:'Chargement des données…', updated:'Données du ', err:'Données météo indisponibles pour le moment. Réessayez dans quelques minutes.',
+    base:'Bas', top:'Sommet', fall:'3 jours', none:'Aucune station ne correspond à votre recherche.', est:'altitudes estimées',
+    countries:{FR:'France',CH:'Suisse',AT:'Autriche',IT:'Italie',DE:'Allemagne',SI:'Slovénie',ES:'Espagne',AD:'Andorre'},
+    ranges:{ALPES:'Alpes',PYRENEES:'Pyrénées'}, search:'Rechercher une station, un massif, un pays', sorts:['Neige au sommet','Neige en bas','Altitude','Nom'],
+    ui:{'t-title':'Neige Alpes & Pyrénées','t-lead':"Hauteur de neige en bas et au sommet de 153 stations, estimée à l'altitude exacte de chaque domaine et mise à jour chaque heure.",
+      't-stations':'stations','t-max':'record au sommet','t-fall':'chutes prévues, 3 j (max)','f-ALL':'Toutes','f-ALPES':'Alpes','f-PYRENEES':'Pyrénées',
+      't-note':'Hauteurs de neige estimées par modèles météo (Open-Meteo, licence CC BY 4.0) : ce ne sont pas les relevés officiels des stations. Vérifiez toujours le bulletin de la station et le bulletin avalanche avant de partir. Altitudes des domaines : skiresort.info. Fond de carte © contributeurs OpenStreetMap.',
+      't-top-top':'Top 10 · plus enneigées au sommet','t-top-base':'Top 10 · plus enneigées en bas',
+      't-privacy':'Politique de confidentialité','t-app':'Existe aussi en application Android.'} },
+  it: { locale:'it-IT', name:'Italiano',
+    loading:'Caricamento dei dati…', updated:'Dati del ', err:'Dati meteo non disponibili al momento. Riprova tra qualche minuto.',
+    base:'Valle', top:'Vetta', fall:'3 giorni', none:'Nessuna stazione corrisponde alla ricerca.', est:'altitudini stimate',
+    countries:{FR:'Francia',CH:'Svizzera',AT:'Austria',IT:'Italia',DE:'Germania',SI:'Slovenia',ES:'Spagna',AD:'Andorra'},
+    ranges:{ALPES:'Alpi',PYRENEES:'Pirenei'}, search:'Cerca una stazione, un massiccio, un paese', sorts:['Neve in vetta','Neve a valle','Altitudine','Nome'],
+    ui:{'t-title':'Neve Alpi & Pirenei','t-lead':"Altezza della neve a valle e in vetta di 153 stazioni, stimata all'altitudine esatta di ogni comprensorio e aggiornata ogni ora.",
+      't-stations':'stazioni','t-max':'massimo in vetta','t-fall':'nevicate previste, 3 g (max)','f-ALL':'Tutte','f-ALPES':'Alpi','f-PYRENEES':'Pirenei',
+      't-note':'Altezze della neve stimate da modelli meteorologici (Open-Meteo, licenza CC BY 4.0): non sono i bollettini ufficiali delle stazioni. Controlla sempre il bollettino della stazione e il bollettino valanghe prima di partire. Altitudini dei comprensori: skiresort.info. Mappa © collaboratori di OpenStreetMap.',
+      't-top-top':'Top 10 · più innevate in vetta','t-top-base':'Top 10 · più innevate a valle',
+      't-privacy':'Informativa sulla privacy','t-app':"Disponibile anche come app Android."} },
+  de: { locale:'de-DE', name:'Deutsch',
+    loading:'Daten werden geladen…', updated:'Daten vom ', err:'Wetterdaten derzeit nicht verfügbar. Versuche es in ein paar Minuten erneut.',
+    base:'Tal', top:'Berg', fall:'3 Tage', none:'Kein Skigebiet entspricht deiner Suche.', est:'Höhen geschätzt',
+    countries:{FR:'Frankreich',CH:'Schweiz',AT:'Österreich',IT:'Italien',DE:'Deutschland',SI:'Slowenien',ES:'Spanien',AD:'Andorra'},
+    ranges:{ALPES:'Alpen',PYRENEES:'Pyrenäen'}, search:'Skigebiet, Region oder Land suchen', sorts:['Schnee am Berg','Schnee im Tal','Höhe','Name'],
+    ui:{'t-title':'Schnee Alpen & Pyrenäen','t-lead':'Schneehöhe im Tal und am Berg von 153 Skigebieten, geschätzt auf der genauen Höhe jedes Gebiets und stündlich aktualisiert.',
+      't-stations':'Skigebiete','t-max':'Höchstwert am Berg','t-fall':'Neuschnee, 3 T (max.)','f-ALL':'Alle','f-ALPES':'Alpen','f-PYRENEES':'Pyrenäen',
+      't-note':'Schneehöhen sind Schätzungen von Wettermodellen (Open-Meteo, Lizenz CC BY 4.0), nicht die offiziellen Schneeberichte der Skigebiete. Prüfe vor der Abfahrt immer den Schneebericht des Skigebiets und den Lawinenlagebericht. Höhen der Skigebiete: skiresort.info. Karte © OpenStreetMap-Mitwirkende.',
+      't-top-top':'Top 10 · meister Schnee am Berg','t-top-base':'Top 10 · meister Schnee im Tal',
+      't-privacy':'Datenschutzerklärung','t-app':'Auch als Android-App erhältlich.'} },
 };
-if (!FR) {
-  document.documentElement.lang = 'en';
-  const en = {'t-title':'Alps & Pyrenees Snow','t-lead':'Snow depth at the base and at the top of 153 resorts, estimated at the exact altitude of each ski area and updated hourly.',
-    't-stations':'resorts','t-max':'deepest at the top','t-fall':'3-day snowfall (max)','f-ALL':'All','f-ALPES':'Alps','f-PYRENEES':'Pyrenees',
-    't-note':'Snow depths are weather model estimates (Open-Meteo, CC BY 4.0), not the resorts\' official reports. Always check the resort snow report and the avalanche bulletin before you go. Ski area altitudes: skiresort.info. Map © OpenStreetMap contributors.',
-    't-privacy':'Privacy policy','t-app':'Also available as an Android app.'};
-  for (const [id, txt] of Object.entries(en)) document.getElementById(id).textContent = txt;
-  document.title = en['t-title'];
-  document.getElementById('q').placeholder = 'Search a resort, area or country';
-  const o = document.getElementById('sort').options;
-  ['Snow at top','Snow at base','Altitude','Name'].forEach((t, i) => o[i].textContent = t);
-}
+const LANG = (() => {
+  try { const saved = localStorage.getItem('lang'); if (saved && LANGS[saved]) return saved; } catch {}
+  const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  return LANGS[nav] ? nav : 'en';
+})();
+const T = LANGS[LANG];
+document.documentElement.lang = LANG;
+for (const [id, txt] of Object.entries(T.ui)) document.getElementById(id).textContent = txt;
+document.title = T.ui['t-title'];
+document.getElementById('q').placeholder = T.search;
+[...document.getElementById('sort').options].forEach((o, i) => o.textContent = T.sorts[i]);
+const langSel = document.getElementById('lang');
+langSel.innerHTML = Object.entries(LANGS).map(([k, v]) => '<option value="' + k + '">' + v.name + '</option>').join('');
+langSel.value = LANG;
+langSel.addEventListener('change', () => { try { localStorage.setItem('lang', langSel.value); } catch {} location.reload(); });
+// Pour la recherche : noms de pays dans toutes les langues
+const COUNTRY_NAMES = code => Object.values(LANGS).map(l => l.countries[code]);
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s).toLowerCase().normalize('NFD').replace(/\p{M}+/gu, '');
@@ -188,7 +241,7 @@ function drawMap(list) {
 function render() {
   const q = norm($('q').value.trim());
   let list = stations.filter(s => (filter === 'ALL' || s.range === filter) &&
-    (!q || [s.name, s.massif, T.countries[s.country], s.country].some(x => norm(x).includes(q))));
+    (!q || [s.name, s.massif, s.country, ...COUNTRY_NAMES(s.country)].some(x => norm(x).includes(q))));
   const sort = $('sort').value;
   const v = (s, k) => data[s.id]?.[k] ?? -1;
   list.sort(sort === 'top' ? (a, b) => v(b, 'top') - v(a, 'top') : sort === 'base' ? (a, b) => v(b, 'base') - v(a, 'base')
@@ -205,6 +258,12 @@ function render() {
       '<div class="fall">' + esc(fall(d.fall)) + '<small>' + esc(T.fall) + '</small></div></article>';
   }).join('') : '<p>' + esc(T.none) + '</p>';
   drawMap(list);
+  const top10 = (k, altKey) => list.filter(s => data[s.id]?.[k] != null)
+    .sort((a, b) => data[b.id][k] - data[a.id][k]).slice(0, 10)
+    .map(s => '<li><span class="n">' + esc(s.name) + '<small>' + esc(T.countries[s.country] + ' · ' + alt(s[altKey])) +
+      '</small></span><span class="v">' + esc(depth(data[s.id][k])) + '</span></li>').join('');
+  $('top-top').innerHTML = top10('top', 'topAlt') || '<li><span></span><span class="n">–</span></li>';
+  $('top-base').innerHTML = top10('base', 'baseAlt') || '<li><span></span><span class="n">–</span></li>';
   const tops = Object.values(data).map(d => d.top).filter(x => x != null);
   const falls = Object.values(data).map(d => d.fall).filter(x => x != null);
   $('s-count').textContent = list.length;
@@ -228,7 +287,7 @@ $('units').addEventListener('click', () => { US = !US; try { localStorage.setIte
     stations = await (await fetch('stations.json')).json();
     render();
     await load();
-    const when = new Date(fetchedAt).toLocaleString(FR ? 'fr-FR' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    const when = new Date(fetchedAt).toLocaleString(T.locale, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
     $('meta').textContent = T.updated + when;
   } catch (e) {
     $('meta').innerHTML = '<span class="err">' + esc(T.err) + '</span>';

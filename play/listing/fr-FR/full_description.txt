@@ -3,6 +3,7 @@ Combien de neige y a-t-il en ce moment dans votre station ? Neige Alpes & Pyrén
 EN UN COUP D'ŒIL
 • Hauteur de neige au bas et au sommet de chaque domaine, à l'altitude exacte
 • Chutes de neige prévues sur 3 jours et température au sommet
+• Top 10 des stations les plus enneigées, en bas et au sommet
 • Recherche, filtres Alpes / Pyrénées / Favoris, tri par enneigement ou altitude
 • Carte des stations, repères colorés selon la neige au sommet
 
@@ -18,7 +19,7 @@ POUR LES HABITUÉS
 • Widget d'écran d'accueil avec la neige de vos favoris
 • Relevés officiels saisis par vous (ex. Tignes 2100), datés automatiquement
 • Unités métriques ou américaines (cm/in, m/ft, °C/°F)
-• Français et anglais
+• Anglais, français, italien et allemand
 
 TRANSPARENCE
 Les hauteurs de neige sont des estimations de modèles météo (Open-Meteo, licence CC BY 4.0), pas les relevés officiels des stations. Vérifiez toujours le bulletin de la station et le bulletin avalanche avant de partir.

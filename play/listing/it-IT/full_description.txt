@@ -1,0 +1,27 @@
+Quanta neve c'è adesso nella tua stazione? Neve Alpi & Pirenei mostra l'altezza della neve a valle e in vetta di 153 stazioni sciistiche delle Alpi (Francia, Svizzera, Austria, Italia, Germania, Slovenia) e dei Pirenei (Francia, Spagna, Andorra).
+
+A COLPO D'OCCHIO
+• Altezza della neve a valle e in vetta di ogni comprensorio, all'altitudine esatta
+• Nevicate previste in 3 giorni e temperatura in vetta
+• Top 10 delle stazioni più innevate, a valle e in vetta
+• Ricerca, filtri Alpi / Pirenei / Preferiti, ordinamento per neve o altitudine
+• Mappa delle stazioni, con indicatori colorati in base alla neve in vetta
+
+SCHEDA DETTAGLIATA
+• Grafico dell'altezza della neve su 7 giorni (valle, metà, vetta)
+• Nevicate, pioggia, temperature, raffiche e zero termico, giorno per giorno
+• Confronto con la stessa data dell'anno scorso
+• Confronto dei modelli ICON (DWD) e AROME (Météo-France)
+• Link al bollettino neve ufficiale, alle webcam e al bollettino valanghe
+
+PER GLI APPASSIONATI
+• Avvisi di neve fresca per le stazioni preferite, con soglia regolabile
+• Widget per la schermata Home con la neve dei tuoi preferiti
+• Bollettini ufficiali inseriti da te, datati automaticamente
+• Unità metriche o americane (cm/in, m/ft, °C/°F)
+• Inglese, francese, italiano e tedesco
+
+TRASPARENZA
+Le altezze della neve sono stime di modelli meteorologici (Open-Meteo, licenza CC BY 4.0), non i bollettini ufficiali delle stazioni. Controlla sempre il bollettino della stazione e il bollettino valanghe prima di partire.
+
+Nessun account, nessuna pubblicità, nessun dato personale raccolto.
