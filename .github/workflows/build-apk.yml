@@ -55,6 +55,11 @@ jobs:
             NeigeAlpesPyrenees.apk
             NeigeAlpesPyrenees.aab
             SHA256SUMS.txt
+      # Supprime l'ancien fichier d'empreinte (remplacé par SHA256SUMS.txt), s'il existe encore.
+      - if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete-asset latest NeigeAlpesPyrenees.apk.sha256 -y -R "$GITHUB_REPOSITORY" || true
       # Publie l'APK en téléchargement direct (page « Releases » du dépôt)
       - uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
