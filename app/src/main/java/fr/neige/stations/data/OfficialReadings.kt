@@ -18,8 +18,8 @@ data class OfficialReading(
 
 /** Relevés pré-remplis (source : application officielle de Tignes, 25/11/2026). */
 private val DEFAULT_READINGS = listOf(
-    OfficialReading("tignes-2100", "tignes", "Tignes 2100", 2100, 116, LocalDate.of(2026, 11, 25)),
-    OfficialReading("tignes-gm", "tignes", "Grande Motte", 3456, 200, LocalDate.of(2026, 11, 25)),
+    OfficialReading("tignes-2100", "tignes", "Tignes Le Lac", 2100, 116, LocalDate.of(2026, 11, 25)),
+    OfficialReading("tignes-gm", "tignes", "Grande Motte", 3300, 200, LocalDate.of(2026, 11, 25)),
 )
 
 /** Stockage local des relevés sur le téléphone. */
