@@ -44,7 +44,10 @@ import fr.neige.stations.data.SnowReport
 import fr.neige.stations.data.Station
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -73,6 +76,7 @@ fun StationsScreen(vm: StationsViewModel) {
     val state by vm.state.collectAsState()
     val stations = state.visible
     var editing by remember { mutableStateOf<OfficialReading?>(null) }
+    var showMap by rememberSaveable { mutableStateOf(false) }
 
     editing?.let { r ->
         ReadingDialog(
@@ -94,6 +98,12 @@ fun StationsScreen(vm: StationsViewModel) {
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
                 actions = {
+                    IconButton(onClick = { showMap = !showMap }) {
+                        Icon(
+                            if (showMap) Icons.AutoMirrored.Filled.List else Icons.Default.Place,
+                            contentDescription = if (showMap) "Afficher la liste" else "Afficher la carte",
+                        )
+                    }
                     IconButton(onClick = vm::refresh, enabled = !state.loading) {
                         Icon(Icons.Default.Refresh, contentDescription = "Actualiser")
                     }
@@ -118,7 +128,7 @@ fun StationsScreen(vm: StationsViewModel) {
                     FilterChip(selected = state.filter == f, onClick = { vm.setFilter(f) }, label = { Text(f.label) })
                 }
             }
-            ChipRow {
+            if (!showMap) ChipRow {
                 Text("Trier :", style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.CenterVertically))
                 Sort.entries.forEach { s ->
                     FilterChip(selected = state.sort == s, onClick = { vm.setSort(s) }, label = { Text(s.label) })
@@ -129,7 +139,14 @@ fun StationsScreen(vm: StationsViewModel) {
                 Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
 
-            LazyColumn(
+            if (showMap) {
+                StationsMap(
+                    stations = stations,
+                    reports = state.reports,
+                    readings = state.readings,
+                    modifier = Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp),
+                )
+            } else LazyColumn(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {

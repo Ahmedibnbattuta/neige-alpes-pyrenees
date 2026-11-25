@@ -6,3 +6,7 @@
     public static int v(...);
     public static int d(...);
 }
+
+# osmdroid (carte OpenStreetMap)
+-keep class org.osmdroid.** { *; }
+-dontwarn org.osmdroid.**

@@ -12,8 +12,8 @@ android {
         applicationId = "fr.neige.stations"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.5.0"
+        versionCode = 7
+        versionName = "0.6.0"
     }
 
     // Clé de signature fixe : permet d'installer chaque nouvelle version par-dessus l'ancienne.
@@ -66,4 +66,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 }
