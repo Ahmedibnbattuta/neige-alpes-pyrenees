@@ -117,4 +117,21 @@
     <string name="alt_verified">Altitudes : skiresort.info.</string>
     <string name="fmt_day">EEE d</string>
     <string name="open_detail">Détails</string>
+
+    <!-- Alertes et widget -->
+    <string name="menu_more">Plus d\'options</string>
+    <string name="menu_alerts">Alertes neige fraîche</string>
+    <string name="alerts_title">Alertes neige fraîche</string>
+    <string name="alerts_enable">Me prévenir pour mes favoris</string>
+    <string name="alerts_threshold">Alerte à partir de %1$s prévus sur 48 h</string>
+    <string name="alerts_note">Vérification toutes les 6 heures, uniquement pour vos stations favorites. Le widget d\'écran d\'accueil est mis à jour en même temps.</string>
+    <string name="alerts_no_favorites">Vous n\'avez pas encore de favori : touchez d\'abord le cœur d\'une station.</string>
+    <string name="alerts_permission_denied">Les notifications sont bloquées pour cette app dans les réglages du téléphone.</string>
+    <string name="close">Fermer</string>
+    <string name="notif_channel">Neige fraîche</string>
+    <string name="notif_title">Neige fraîche à %1$s</string>
+    <string name="notif_text">%1$s prévus au sommet d\'ici demain soir.</string>
+    <string name="widget_title">Neige · favoris</string>
+    <string name="widget_empty">Ajoutez des favoris dans l\'app (icône cœur).</string>
+    <string name="widget_desc">Neige au sommet de vos stations favorites.</string>
 </resources>

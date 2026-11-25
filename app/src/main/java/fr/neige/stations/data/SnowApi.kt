@@ -77,6 +77,11 @@ data class DetailReport(
 /** Neige à la même date l'an dernier (réanalyse ERA5-Land, résolution ~9 km). */
 data class HistoryReport(val date: LocalDate, val baseCm: Int?, val topCm: Int?)
 
+/** Résumé pour une station favorite. */
+data class FavoriteSnow(val topCm: Int?, val todayCm: Double?, val tomorrowCm: Double?) {
+    val next48hCm: Double get() = (todayCm ?: 0.0) + (tomorrowCm ?: 0.0)
+}
+
 class RateLimitException : Exception("limite d'appels du service météo atteinte")
 
 private const val API_HOST = "api.open-meteo.com"
@@ -171,6 +176,29 @@ class SnowApi(cacheRoot: File) {
             }
         }
         DetailReport(series[0], series[1], series[2], freezing)
+    }
+
+    /** Favoris (alertes, widget) : neige au sommet + chutes prévues aujourd'hui et demain. */
+    suspend fun fetchFavorites(stations: List<Station>): Map<String, FavoriteSnow> = withContext(Dispatchers.IO) {
+        if (stations.isEmpty()) return@withContext emptyMap()
+        val url = "https://$API_HOST/v1/forecast" +
+            "?latitude=" + stations.joinToString(",") { it.lat.toString() } +
+            "&longitude=" + stations.joinToString(",") { it.lon.toString() } +
+            "&elevation=" + stations.joinToString(",") { it.topAlt.toString() } +
+            "&current=snow_depth&daily=snowfall_sum&forecast_days=2" +
+            "&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
+        val (body, _, _) = cachedGet(url, 2 * 3_600_000L)
+        val items = toObjects(body)
+        stations.indices.associate { i ->
+            val o = items.getOrNull(i)
+            val depth = o?.optJSONObject("current")?.optDouble("snow_depth", Double.NaN) ?: Double.NaN
+            val falls = o?.optJSONObject("daily")?.optJSONArray("snowfall_sum")
+            stations[i].id to FavoriteSnow(
+                topCm = depth.takeIf { !it.isNaN() && it in 0.0..30.0 }?.let { (it * 100).roundToInt() },
+                todayCm = num(falls, 0, 0.0..500.0),
+                tomorrowCm = num(falls, 1, 0.0..500.0),
+            )
+        }
     }
 
     /** Même date l'an dernier, bas et sommet (ERA5-Land). */

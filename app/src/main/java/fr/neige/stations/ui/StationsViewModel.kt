@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.neige.stations.R
+import fr.neige.stations.background.SnowWorker
 import fr.neige.stations.data.CompareReport
 import fr.neige.stations.data.DetailReport
 import fr.neige.stations.data.HistoryReport
@@ -42,6 +43,8 @@ data class UiState(
     @StringRes val error: Int? = null,
     val updatedAt: Long? = null,          // ms : moment où les données ont été reçues
     val units: UnitSystem = UnitSystem.METRIC,
+    val alertsEnabled: Boolean = false,
+    val alertsThresholdCm: Int = SnowWorker.DEFAULT_THRESHOLD_CM,
     val readings: List<OfficialReading> = emptyList(),
     @StringRes val notice: Int? = null,
     val compare: Map<String, CompareUi> = emptyMap(),
@@ -101,6 +104,8 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
             units = prefs.getString("units", null)
                 ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() }
                 ?: UnitSystem.default(),
+            alertsEnabled = prefs.getBoolean(SnowWorker.KEY_ALERTS, false),
+            alertsThresholdCm = prefs.getInt(SnowWorker.KEY_THRESHOLD, SnowWorker.DEFAULT_THRESHOLD_CM),
         )
     )
     val state: StateFlow<UiState> = _state.asStateFlow()
@@ -125,9 +130,22 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
     fun toggleFavorite(id: String) {
         _state.update {
             val fav = if (id in it.favorites) it.favorites - id else it.favorites + id
-            prefs.edit().putStringSet("favorites", fav).apply()
+            prefs.edit().putStringSet("favorites", fav).commit()
             it.copy(favorites = fav)
         }
+        SnowWorker.runNow(getApplication())   // met à jour le widget
+    }
+
+    fun setAlerts(enabled: Boolean) {
+        prefs.edit().putBoolean(SnowWorker.KEY_ALERTS, enabled).apply()
+        _state.update { it.copy(alertsEnabled = enabled) }
+        if (enabled) SnowWorker.runNow(getApplication())
+    }
+
+    fun setAlertsThreshold(cm: Int) {
+        val v = cm.coerceIn(5, 100)
+        prefs.edit().putInt(SnowWorker.KEY_THRESHOLD, v).apply()
+        _state.update { it.copy(alertsThresholdCm = v) }
     }
 
     /** Ajoute ou remplace (même id) un relevé officiel. */

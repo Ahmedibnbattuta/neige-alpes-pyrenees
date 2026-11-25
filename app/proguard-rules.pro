@@ -10,3 +10,6 @@
 # osmdroid (carte OpenStreetMap)
 -keep class org.osmdroid.** { *; }
 -dontwarn org.osmdroid.**
+
+# WorkManager instancie le worker par réflexion
+-keep class fr.neige.stations.background.SnowWorker { *; }

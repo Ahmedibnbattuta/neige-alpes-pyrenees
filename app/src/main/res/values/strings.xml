@@ -117,4 +117,21 @@
     <string name="alt_verified">Altitudes from skiresort.info.</string>
     <string name="fmt_day">EEE d</string>
     <string name="open_detail">Details</string>
+
+    <!-- Alertes et widget -->
+    <string name="menu_more">More options</string>
+    <string name="menu_alerts">Fresh snow alerts</string>
+    <string name="alerts_title">Fresh snow alerts</string>
+    <string name="alerts_enable">Notify me about my favorites</string>
+    <string name="alerts_threshold">Alert from %1$s expected within 48 h</string>
+    <string name="alerts_note">Checked every 6 hours for your favorite resorts only. The home screen widget is updated at the same time.</string>
+    <string name="alerts_no_favorites">You have no favorites yet: tap the heart on a resort first.</string>
+    <string name="alerts_permission_denied">Notifications are blocked for this app in your phone settings.</string>
+    <string name="close">Close</string>
+    <string name="notif_channel">Fresh snow</string>
+    <string name="notif_title">Fresh snow at %1$s</string>
+    <string name="notif_text">%1$s expected at the top by tomorrow evening.</string>
+    <string name="widget_title">Snow · favorites</string>
+    <string name="widget_empty">Add favorites in the app (heart icon).</string>
+    <string name="widget_desc">Snow at the top of your favorite resorts.</string>
 </resources>

@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,10 +24,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -91,6 +96,8 @@ fun StationsScreen(vm: StationsViewModel) {
     var editing by remember { mutableStateOf<OfficialReading?>(null) }
     var showMap by rememberSaveable { mutableStateOf(false) }
     var detailId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showAlerts by rememberSaveable { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
 
     CompositionLocalProvider(LocalUnits provides state.units) {
         val detailStation = detailId?.let { id -> STATIONS.firstOrNull { it.id == id } }
@@ -103,6 +110,16 @@ fun StationsScreen(vm: StationsViewModel) {
                 onBack = { detailId = null },
             )
             return@CompositionLocalProvider
+        }
+        if (showAlerts) {
+            AlertsDialog(
+                enabled = state.alertsEnabled,
+                thresholdCm = state.alertsThresholdCm,
+                hasFavorites = state.favorites.isNotEmpty(),
+                onEnabled = vm::setAlerts,
+                onThreshold = vm::setAlertsThreshold,
+                onDismiss = { showAlerts = false },
+            )
         }
         editing?.let { r ->
             ReadingDialog(
@@ -139,6 +156,18 @@ fun StationsScreen(vm: StationsViewModel) {
                         }
                         IconButton(onClick = vm::refresh, enabled = !state.loading) {
                             Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
+                        }
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.menu_more))
+                            }
+                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_alerts)) },
+                                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) },
+                                    onClick = { menuOpen = false; showAlerts = true },
+                                )
+                            }
                         }
                     },
                 )
