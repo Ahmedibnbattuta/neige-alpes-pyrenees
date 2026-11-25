@@ -32,7 +32,7 @@
     <string name="refreshed_at"> · aktualisiert %1$s</string>
     <string name="empty_favorites">Noch keine Favoriten: Tippe auf das Herz eines Skigebiets, um es hinzuzufügen.</string>
     <string name="empty_search">Kein Skigebiet entspricht deiner Suche.</string>
-    <string name="disclaimer">Schneehöhen sind Schätzungen von Wettermodellen (Open-Meteo \"best match\") auf der angegebenen Höhe. Es sind nicht die offiziellen Schneeberichte der Skigebiete. Höhenangaben der Skigebiete ungefähr. Daten: Open-Meteo.com (CC BY 4.0).</string>
+    <string name="disclaimer">Die Schneehöhe wird für jede Höhe seit Saisonbeginn simuliert, aus Open-Meteo-Wetterdaten (Niederschlag, auf die Höhe umgerechnete Temperatur, Schmelze und Setzung). Aktualisierung alle 2 Stunden. Es handelt sich um Schätzungen, nicht um die offiziellen Schneeberichte der Skigebiete. Daten: Open-Meteo.com (CC BY 4.0).</string>
     <string name="add_favorite">Zu Favoriten hinzufügen</string>
     <string name="remove_favorite">Aus Favoriten entfernen</string>
     <string name="level_base">Tal</string>
@@ -50,7 +50,7 @@
     <string name="compare_top">Berg %1$s</string>
     <string name="compare_falls">Neuschnee 3 T</string>
     <string name="compare_na">k. A.</string>
-    <string name="compare_note">k. A.: AROME veröffentlicht keine Schneehöhe am Boden, nur den erwarteten Neuschnee. Neuschnee am Berg berechnet.</string>
+    <string name="compare_note">Rohwerte der Modelle für eine Gitterzelle von 1–2 km, nur zum Vergleich. k. A.: AROME veröffentlicht keine Schneehöhe am Boden. Neuschnee am Berg berechnet.</string>
     <string name="compare_err_rate">Zu viele Anfragen, versuche es in ein paar Minuten erneut.</string>
     <string name="compare_err">Vergleich derzeit nicht verfügbar.</string>
     <string name="readings_title">Offizielle Schneeberichte</string>
@@ -93,7 +93,7 @@
     <string name="detail_table_title">Tag für Tag (Bergstation)</string>
     <string name="history_title">Gleiches Datum letztes Jahr</string>
     <string name="history_text">%1$s: %2$s im Tal, %3$s am Berg.</string>
-    <string name="history_note">Quelle: ERA5-Land-Reanalyse (Copernicus), gröber als die Vorhersagemodelle: Vergleiche eher Trends als genaue Werte.</string>
+    <string name="history_note">Mit demselben Schneemodell aus der ERA5-Reanalyse (Copernicus) berechnet: Vergleiche eher Trends als genaue Werte.</string>
     <string name="history_error">Verlauf derzeit nicht verfügbar.</string>
     <string name="links_title">Vor Ort prüfen</string>
     <string name="link_official">Offizieller Schneebericht</string>

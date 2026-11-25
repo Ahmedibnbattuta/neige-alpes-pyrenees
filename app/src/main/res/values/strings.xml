@@ -36,7 +36,7 @@
     <string name="refreshed_at"> · updated %1$s</string>
     <string name="empty_favorites">No favorites yet: tap the heart on a resort to add it.</string>
     <string name="empty_search">No resort matches your search.</string>
-    <string name="disclaimer">Snow depths are estimated by weather models (Open-Meteo \"best match\" blend) at the altitude shown. They are not the resorts\' official reports. Ski area altitudes are approximate. Data: Open-Meteo.com (CC BY 4.0).</string>
+    <string name="disclaimer">Snow depth is simulated at each altitude since the start of the season, from Open-Meteo weather data (precipitation, temperature adjusted to altitude, melting and settling). Updated every 2 hours. These are estimates, not the resorts\' official reports. Data: Open-Meteo.com (CC BY 4.0).</string>
 
     <string name="add_favorite">Add to favorites</string>
     <string name="remove_favorite">Remove from favorites</string>
@@ -56,7 +56,7 @@
     <string name="compare_top">Top %1$s</string>
     <string name="compare_falls">3-day snow</string>
     <string name="compare_na">n/a</string>
-    <string name="compare_note">n/a: AROME does not publish snow depth on the ground, only expected snowfall. Snowfall is computed at the top.</string>
+    <string name="compare_note">Raw model values for a 1–2 km grid cell, shown for comparison only. n/a: AROME does not publish snow depth on the ground. Snowfall is computed at the top.</string>
     <string name="compare_err_rate">Too many requests, try again in a few minutes.</string>
     <string name="compare_err">Comparison unavailable right now.</string>
 
@@ -106,7 +106,7 @@
     <string name="detail_table_title">Day by day (top of the ski area)</string>
     <string name="history_title">Same date last year</string>
     <string name="history_text">%1$s: %2$s at the base, %3$s at the top.</string>
-    <string name="history_note">Source: ERA5-Land reanalysis (Copernicus), coarser than the forecast models: compare trends rather than exact values.</string>
+    <string name="history_note">Calculated with the same snow model from the ERA5 reanalysis (Copernicus): compare trends rather than exact values.</string>
     <string name="history_error">History unavailable right now.</string>
     <string name="links_title">Check on site</string>
     <string name="link_official">Official snow report</string>

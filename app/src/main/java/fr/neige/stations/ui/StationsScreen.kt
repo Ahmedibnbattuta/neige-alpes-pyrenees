@@ -110,7 +110,7 @@ fun StationsScreen(vm: StationsViewModel) {
             StationDetailScreen(
                 station = detailStation,
                 detail = state.detail[detailStation.id],
-                history = state.history[detailStation.id],
+                feed = state.feed[detailStation.id],
                 onBack = { detailId = null },
             )
             return@CompositionLocalProvider

@@ -46,9 +46,9 @@ import fr.neige.stations.R
 import fr.neige.stations.data.Country
 import fr.neige.stations.data.DetailReport
 import fr.neige.stations.data.HistoryReport
-import fr.neige.stations.data.LevelSeries
+import fr.neige.stations.data.FeedLevel
+import fr.neige.stations.data.StationFeed
 import fr.neige.stations.data.Station
-import java.time.LocalDateTime
 import kotlin.math.max
 
 private val BASE_COLOR = Color(0xFF7FB3E0)
@@ -60,7 +60,7 @@ private val TOP_COLOR = Color(0xFF0B3D6B)
 fun StationDetailScreen(
     station: Station,
     detail: LoadUi<DetailReport>?,
-    history: LoadUi<HistoryReport>?,
+    feed: StationFeed?,
     onBack: () -> Unit,
 ) {
     val u = LocalUnits.current
@@ -101,45 +101,39 @@ fun StationDetailScreen(
                     )
                 }
             }
+            // Neige : calcul par altitude (snow.json), identique à la liste et au site
+            if (feed != null) {
+                item { NowCard(feed) }
+                item { DepthChartCard(feed) }
+                item { SnowfallCard(feed.top) }
+            }
+            // Météo détaillée : Open-Meteo, chargée à l'ouverture
             when (detail) {
                 null, LoadUi.Loading -> item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
                 is LoadUi.Failed -> item { Text(stringResource(detail.messageRes), color = MaterialTheme.colorScheme.error) }
-                is LoadUi.Loaded -> {
-                    val r = detail.value
-                    item { NowCard(r) }
-                    item { DepthChartCard(r) }
-                    item { SnowfallCard(r.top) }
-                    item { DayTable(r) }
-                }
+                is LoadUi.Loaded -> item { DayTable(detail.value) }
             }
-            item { HistoryCard(history) }
+            item { HistoryCard(feed?.lastYear) }
             item { LinksCard(station) }
         }
     }
 }
 
-/** Valeur la plus proche de l'heure actuelle. */
-private fun currentDepth(s: LevelSeries): Int? {
-    val now = LocalDateTime.now()
-    val i = s.times.indexOfLast { !it.isAfter(now) }.coerceAtLeast(0)
-    return s.depthCm.getOrNull(i)
-}
-
 @Composable
-private fun NowCard(r: DetailReport) {
+private fun NowCard(f: StationFeed) {
     val u = LocalUnits.current
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.detail_now), style = MaterialTheme.typography.titleSmall)
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOf(
-                    Triple(R.string.level_base, r.base, BASE_COLOR),
-                    Triple(R.string.level_mid, r.mid, MID_COLOR),
-                    Triple(R.string.level_top, r.top, TOP_COLOR),
-                ).forEach { (label, s, color) ->
+                    Triple(R.string.level_base, f.base, BASE_COLOR),
+                    Triple(R.string.level_mid, f.mid, MID_COLOR),
+                    Triple(R.string.level_top, f.top, TOP_COLOR),
+                ).forEach { (label, l, color) ->
                     Column(Modifier.weight(1f)) {
-                        Text("${stringResource(label)} · ${fmtAlt(s.altitude, u)}", style = MaterialTheme.typography.labelMedium)
-                        Text(fmtDepth(currentDepth(s), u), style = MaterialTheme.typography.headlineSmall, color = color, fontWeight = FontWeight.Bold)
+                        Text("${stringResource(label)} · ${fmtAlt(l.altitude, u)}", style = MaterialTheme.typography.labelMedium)
+                        Text(fmtDepth(l.nowCm, u), style = MaterialTheme.typography.headlineSmall, color = color, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -160,11 +154,11 @@ private fun Legend(items: List<Pair<String, Color>>) {
 }
 
 @Composable
-private fun DayLabels(r: LevelSeries) {
+private fun DayLabels(dates: List<java.time.LocalDate>) {
     Row(Modifier.fillMaxWidth()) {
-        r.days.forEach { d ->
+        dates.forEach { d ->
             Text(
-                fmtDate(R.string.fmt_day, d.date),
+                fmtDate(R.string.fmt_day, d),
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f),
@@ -174,46 +168,43 @@ private fun DayLabels(r: LevelSeries) {
 }
 
 @Composable
-private fun DepthChartCard(r: DetailReport) {
+private fun DepthChartCard(f: StationFeed) {
     val u = LocalUnits.current
-    val series = listOf(r.base to BASE_COLOR, r.mid to MID_COLOR, r.top to TOP_COLOR)
-    val maxCm = series.flatMap { it.first.depthCm.filterNotNull() }.maxOrNull() ?: 0
+    val series = listOf(f.base to BASE_COLOR, f.mid to MID_COLOR, f.top to TOP_COLOR)
+    val maxCm = series.flatMap { (l, _) -> l.days.mapNotNull { it.depthCm } }.maxOrNull() ?: 0
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.detail_chart_depth), style = MaterialTheme.typography.titleSmall)
-            Text(
-                "max ${fmtDepth(maxCm, u)}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text("max ${fmtDepth(maxCm, u)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Canvas(Modifier.fillMaxWidth().height(160.dp).padding(vertical = 8.dp)) {
                 val top = max(maxCm, 10).toFloat() * 1.1f
-                // Lignes de repère : quart, moitié, trois quarts
                 for (k in 1..3) {
                     val y = size.height * k / 4f
                     drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
                 }
-                series.forEach { (s, color) ->
-                    val n = s.depthCm.size
+                series.forEach { (l, color) ->
+                    val n = l.days.size
                     if (n < 2) return@forEach
+                    val slot = size.width / n
                     val path = Path()
                     var started = false
-                    s.depthCm.forEachIndexed { i, v ->
-                        if (v == null) { started = false; return@forEachIndexed }
-                        val x = size.width * i / (n - 1).toFloat()
+                    l.days.forEachIndexed { i, d ->
+                        val v = d.depthCm ?: run { started = false; return@forEachIndexed }
+                        val x = slot * i + slot / 2   // centré sous l'étiquette du jour
                         val y = size.height - size.height * (v / top)
                         if (!started) { path.moveTo(x, y); started = true } else path.lineTo(x, y)
+                        drawCircle(color, radius = 5f, center = Offset(x, y))
                     }
                     drawPath(path, color, style = Stroke(width = 5f))
                 }
             }
-            DayLabels(r.top)
+            DayLabels(f.top.days.map { it.date })
             Legend(
                 listOf(
-                    "${stringResource(R.string.level_base)} ${fmtAlt(r.base.altitude, u)}" to BASE_COLOR,
-                    "${stringResource(R.string.level_mid)} ${fmtAlt(r.mid.altitude, u)}" to MID_COLOR,
-                    "${stringResource(R.string.level_top)} ${fmtAlt(r.top.altitude, u)}" to TOP_COLOR,
+                    "${stringResource(R.string.level_base)} ${fmtAlt(f.base.altitude, u)}" to BASE_COLOR,
+                    "${stringResource(R.string.level_mid)} ${fmtAlt(f.mid.altitude, u)}" to MID_COLOR,
+                    "${stringResource(R.string.level_top)} ${fmtAlt(f.top.altitude, u)}" to TOP_COLOR,
                 )
             )
         }
@@ -221,7 +212,7 @@ private fun DepthChartCard(r: DetailReport) {
 }
 
 @Composable
-private fun SnowfallCard(top: LevelSeries) {
+private fun SnowfallCard(top: FeedLevel) {
     val u = LocalUnits.current
     val maxFall = top.days.mapNotNull { it.snowfallCm }.maxOrNull() ?: 0.0
     ElevatedCard(Modifier.fillMaxWidth()) {
@@ -233,13 +224,8 @@ private fun SnowfallCard(top: LevelSeries) {
                 val slot = size.width / n
                 val scale = max(maxFall, 5.0).toFloat()
                 top.days.forEachIndexed { i, d ->
-                    val v = (d.snowfallCm ?: 0.0).toFloat()
-                    val h = size.height * (v / scale)
-                    drawRect(
-                        TOP_COLOR,
-                        topLeft = Offset(i * slot + slot * 0.2f, size.height - h),
-                        size = Size(slot * 0.6f, h),
-                    )
+                    val h = size.height * ((d.snowfallCm ?: 0.0).toFloat() / scale)
+                    drawRect(TOP_COLOR, topLeft = Offset(i * slot + slot * 0.2f, size.height - h), size = Size(slot * 0.6f, h))
                 }
             }
             Row(Modifier.fillMaxWidth()) {
@@ -252,7 +238,7 @@ private fun SnowfallCard(top: LevelSeries) {
                     )
                 }
             }
-            DayLabels(top)
+            DayLabels(top.days.map { it.date })
         }
     }
 }
@@ -304,28 +290,25 @@ private fun TableRow(cells: List<String>, header: Boolean = false) {
 }
 
 @Composable
-private fun HistoryCard(history: LoadUi<HistoryReport>?) {
+private fun HistoryCard(h: HistoryReport?) {
     val u = LocalUnits.current
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleSmall)
-            when (history) {
-                null, LoadUi.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 8.dp))
-                is LoadUi.Failed -> Text(stringResource(history.messageRes), color = MaterialTheme.colorScheme.error)
-                is LoadUi.Loaded -> {
-                    val h = history.value
-                    Text(
-                        stringResource(R.string.history_text, fmtDate(R.string.fmt_date, h.date), fmtDepth(h.baseCm, u), fmtDepth(h.topCm, u)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                    Text(
-                        stringResource(R.string.history_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
+            if (h == null) {
+                Text(stringResource(R.string.history_error), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Text(
+                    stringResource(R.string.history_text, fmtDate(R.string.fmt_date, h.date), fmtDepth(h.baseCm, u), fmtDepth(h.topCm, u)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                Text(
+                    stringResource(R.string.history_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
     }

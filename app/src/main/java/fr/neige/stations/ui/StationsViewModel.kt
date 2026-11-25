@@ -9,7 +9,7 @@ import fr.neige.stations.R
 import fr.neige.stations.background.SnowWorker
 import fr.neige.stations.data.CompareReport
 import fr.neige.stations.data.DetailReport
-import fr.neige.stations.data.HistoryReport
+import fr.neige.stations.data.StationFeed
 import fr.neige.stations.data.OfficialReading
 import fr.neige.stations.data.OfficialReadingsStore
 import fr.neige.stations.data.Range
@@ -49,7 +49,7 @@ data class UiState(
     @StringRes val notice: Int? = null,
     val compare: Map<String, CompareUi> = emptyMap(),
     val detail: Map<String, LoadUi<DetailReport>> = emptyMap(),
-    val history: Map<String, LoadUi<HistoryReport>> = emptyMap(),
+    val feed: Map<String, StationFeed> = emptyMap(),
 ) {
     fun readingsFor(stationId: String) = readings.filter { it.stationId == stationId }
 
@@ -178,6 +178,7 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
                 _state.update {
                     it.copy(
                         reports = result.reports,
+                        feed = result.feed,
                         loading = false,
                         updatedAt = result.fetchedAt,
                         notice = if (result.rateLimited) R.string.notice_rate_limited else null,
@@ -225,17 +226,6 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
                     LoadUi.Failed(R.string.err_load)
                 }
                 _state.update { it.copy(detail = it.detail + (station.id to ui)) }
-            }
-        }
-        if (st.history[station.id] !is LoadUi.Loaded && st.history[station.id] !is LoadUi.Loading) {
-            _state.update { it.copy(history = it.history + (station.id to LoadUi.Loading)) }
-            viewModelScope.launch {
-                val ui: LoadUi<HistoryReport> = try {
-                    LoadUi.Loaded(api.fetchHistory(station, LocalDate.now()))
-                } catch (e: Exception) {
-                    LoadUi.Failed(R.string.history_error)
-                }
-                _state.update { it.copy(history = it.history + (station.id to ui)) }
             }
         }
     }

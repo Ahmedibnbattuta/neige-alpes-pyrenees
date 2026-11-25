@@ -36,7 +36,7 @@
     <string name="refreshed_at"> · actualisé le %1$s</string>
     <string name="empty_favorites">Aucun favori pour l\'instant : touchez le cœur d\'une station pour l\'ajouter.</string>
     <string name="empty_search">Aucune station ne correspond à votre recherche.</string>
-    <string name="disclaimer">Hauteurs de neige estimées par modèle météo (combinaison Open-Meteo « best match ») à l\'altitude indiquée. Ce ne sont pas les relevés officiels des stations. Altitudes des domaines indicatives. Données : Open-Meteo.com (CC BY 4.0).</string>
+    <string name="disclaimer">Hauteur de neige simulée à chaque altitude depuis le début de saison, à partir des données météo Open-Meteo (précipitations, température ramenée à l\'altitude, fonte et tassement). Mise à jour toutes les 2 heures. Ce sont des estimations, pas les relevés officiels des stations. Données : Open-Meteo.com (CC BY 4.0).</string>
 
     <string name="add_favorite">Ajouter aux favoris</string>
     <string name="remove_favorite">Retirer des favoris</string>
@@ -56,7 +56,7 @@
     <string name="compare_top">Sommet %1$s</string>
     <string name="compare_falls">Chutes 3 j</string>
     <string name="compare_na">n.d.</string>
-    <string name="compare_note">n.d. : AROME ne publie pas la hauteur de neige au sol, seulement les chutes prévues. Chutes calculées au sommet.</string>
+    <string name="compare_note">Valeurs brutes des modèles pour une maille de 1 à 2 km, données à titre de comparaison. n.d. : AROME ne publie pas la hauteur de neige au sol. Chutes calculées au sommet.</string>
     <string name="compare_err_rate">Trop de demandes, réessayez dans quelques minutes.</string>
     <string name="compare_err">Comparaison indisponible pour le moment.</string>
 
@@ -106,7 +106,7 @@
     <string name="detail_table_title">Jour par jour (sommet du domaine)</string>
     <string name="history_title">Même date l\'an dernier</string>
     <string name="history_text">%1$s : %2$s en bas, %3$s au sommet.</string>
-    <string name="history_note">Source : réanalyse ERA5-Land (Copernicus), moins précise que les modèles de prévision : comparez les tendances plutôt que les valeurs exactes.</string>
+    <string name="history_note">Calculé avec le même modèle de neige à partir de la réanalyse ERA5 (Copernicus) : comparez les tendances plutôt que les valeurs exactes.</string>
     <string name="history_error">Historique indisponible pour le moment.</string>
     <string name="links_title">Vérifier sur place</string>
     <string name="link_official">Bulletin neige officiel</string>

@@ -32,7 +32,7 @@
     <string name="refreshed_at"> · aggiornato %1$s</string>
     <string name="empty_favorites">Ancora nessun preferito: tocca il cuore di una stazione per aggiungerla.</string>
     <string name="empty_search">Nessuna stazione corrisponde alla ricerca.</string>
-    <string name="disclaimer">Altezze della neve stimate da modelli meteorologici (combinazione Open-Meteo \"best match\") all\'altitudine indicata. Non sono i bollettini ufficiali delle stazioni. Altitudini dei comprensori indicative. Dati: Open-Meteo.com (CC BY 4.0).</string>
+    <string name="disclaimer">L\'altezza della neve è simulata a ogni altitudine dall\'inizio della stagione, a partire dai dati meteo Open-Meteo (precipitazioni, temperatura corretta per l\'altitudine, fusione e assestamento). Aggiornata ogni 2 ore. Sono stime, non i bollettini ufficiali delle stazioni. Dati: Open-Meteo.com (CC BY 4.0).</string>
     <string name="add_favorite">Aggiungi ai preferiti</string>
     <string name="remove_favorite">Rimuovi dai preferiti</string>
     <string name="level_base">Valle</string>
@@ -50,7 +50,7 @@
     <string name="compare_top">Vetta %1$s</string>
     <string name="compare_falls">Neve 3 g</string>
     <string name="compare_na">n.d.</string>
-    <string name="compare_note">n.d.: AROME non pubblica l\'altezza della neve al suolo, solo le nevicate previste. Nevicate calcolate in vetta.</string>
+    <string name="compare_note">Valori grezzi dei modelli per una cella di 1-2 km, mostrati solo per confronto. n.d.: AROME non pubblica l\'altezza della neve al suolo. Nevicate calcolate in vetta.</string>
     <string name="compare_err_rate">Troppe richieste, riprova tra qualche minuto.</string>
     <string name="compare_err">Confronto non disponibile al momento.</string>
     <string name="readings_title">Bollettini ufficiali della stazione</string>
@@ -93,7 +93,7 @@
     <string name="detail_table_title">Giorno per giorno (vetta del comprensorio)</string>
     <string name="history_title">Stessa data l\'anno scorso</string>
     <string name="history_text">%1$s: %2$s a valle, %3$s in vetta.</string>
-    <string name="history_note">Fonte: rianalisi ERA5-Land (Copernicus), meno precisa dei modelli di previsione: confronta le tendenze più che i valori esatti.</string>
+    <string name="history_note">Calcolato con lo stesso modello di neve a partire dalla rianalisi ERA5 (Copernicus): confronta le tendenze più che i valori esatti.</string>
     <string name="history_error">Storico non disponibile al momento.</string>
     <string name="links_title">Verifica sul posto</string>
     <string name="link_official">Bollettino neve ufficiale</string>

@@ -40,11 +40,26 @@ data class CompareReport(
     val arome: ModelData?,  // Météo-France AROME : chutes prévues uniquement
 )
 
-/** Résultat d'un chargement : données + moment où elles ont été reçues du serveur. */
+/** Un jour de la prévision de neige calculée (fichier snow.json). */
+data class FeedDay(val date: LocalDate, val depthCm: Int?, val snowfallCm: Double?, val tMaxC: Double?, val tMinC: Double?)
+
+/** Neige calculée à une altitude : maintenant + 7 jours. */
+data class FeedLevel(val altitude: Int, val nowCm: Int?, val days: List<FeedDay>)
+
+/** Données calculées pour une station (bas, milieu, sommet, même date l'an dernier). */
+data class StationFeed(
+    val base: FeedLevel,
+    val mid: FeedLevel,
+    val top: FeedLevel,
+    val lastYear: HistoryReport?,
+)
+
+/** Résultat d'un chargement : données + moment où elles ont été calculées. */
 data class FetchResult(
     val reports: Map<String, SnowReport>,
-    val fetchedAt: Long,          // horodatage (ms) de la réponse du serveur
-    val rateLimited: Boolean,     // true si la limite d'appels a été atteinte (données plus anciennes)
+    val fetchedAt: Long,          // horodatage (ms) du calcul
+    val rateLimited: Boolean,     // true si le serveur a refusé (données plus anciennes affichées)
+    val feed: Map<String, StationFeed> = emptyMap(),
 )
 
 /** Prévision d'une journée à une altitude. */
@@ -86,7 +101,10 @@ class RateLimitException : Exception("limite d'appels du service météo atteint
 
 private const val API_HOST = "api.open-meteo.com"
 private const val ARCHIVE_HOST = "archive-api.open-meteo.com"
-private val ALLOWED_HOSTS = setOf(API_HOST, ARCHIVE_HOST)
+private const val FEED_HOST = "ahmedibnbattuta.github.io"
+/** Neige calculée toutes les 2 h par tools/snow_feed.py (GitHub Actions) et publiée avec le site. */
+private const val FEED_URL = "https://$FEED_HOST/neige-alpes-pyrenees/snow.json"
+private val ALLOWED_HOSTS = setOf(API_HOST, ARCHIVE_HOST, FEED_HOST)
 private const val MAX_RESPONSE_BYTES = 2_000_000
 
 private enum class Level { BASE, MID, TOP }
@@ -109,29 +127,59 @@ class SnowApi(cacheRoot: File) {
 
     private val cacheDir = File(cacheRoot, "meteo").apply { mkdirs() }
 
-    /** Liste principale : 2 requêtes (bas et sommet) pour toutes les stations. */
+    /**
+     * Liste principale : un seul fichier, snow.json, calculé toutes les 2 h sur GitHub.
+     * La neige y est simulée à chaque altitude depuis le début de saison (voir tools/snow_feed.py),
+     * donc le sommet n'a jamais moins de neige que le bas sans raison météo.
+     */
     suspend fun fetchAll(stations: List<Station>, maxAgeMs: Long): FetchResult = withContext(Dispatchers.IO) {
-        val urls = listOf(Level.BASE, Level.TOP).associateWith { level ->
-            buildUrl(stations.map { Point(it.lat, it.lon, altitudeOf(it, level)) }, null)
+        val (body, time, limited) = cachedGet(FEED_URL, maxAgeMs)
+        val (feed, generated) = parseFeed(body, stations)
+        val genLocal = generated?.atZone(java.time.ZoneId.systemDefault())?.toLocalDateTime()
+        fun level(f: FeedLevel) = LevelData(
+            altitude = f.altitude,
+            snowCm = f.nowCm,
+            tempC = null,
+            snowfall3dCm = f.days.take(3).mapNotNull { it.snowfallCm }.takeIf { it.isNotEmpty() }?.sum(),
+            time = genLocal,
+        )
+        val reports = feed.mapValues { (_, f) -> SnowReport(base = level(f.base), top = level(f.top), mid = level(f.mid)) }
+        FetchResult(reports, generated?.toEpochMilli() ?: time, limited, feed)
+    }
+
+    /** Lecture de snow.json (séparée pour les tests). Renvoie les stations connues + l'heure du calcul. */
+    internal fun parseFeed(body: String, stations: List<Station>): Pair<Map<String, StationFeed>, java.time.Instant?> {
+        val root = JSONObject(body)
+        val st = root.optJSONObject("stations") ?: JSONObject()
+        val ly = root.optJSONObject("lastYear")
+        val lyDate = runCatching { LocalDate.parse(root.optString("lastYearDate")) }.getOrNull()
+        fun cm(o: JSONObject?, k: String): Int? =
+            if (o == null || o.isNull(k) || !o.has(k)) null else o.optInt(k, -1).takeIf { it in 0..3000 }
+        fun dbl(o: JSONObject, k: String, r: ClosedFloatingPointRange<Double>): Double? =
+            if (o.isNull(k)) null else o.optDouble(k, Double.NaN).takeIf { !it.isNaN() && it in r }
+        fun level(o: JSONObject?, fallbackAlt: Int): FeedLevel {
+            val days = mutableListOf<FeedDay>()
+            o?.optJSONArray("days")?.let { a ->
+                for (i in 0 until minOf(a.length(), 16)) {
+                    val d = a.optJSONObject(i) ?: continue
+                    val date = runCatching { LocalDate.parse(d.getString("d")) }.getOrNull() ?: continue
+                    days += FeedDay(date, cm(d, "depth"), dbl(d, "snowfall", 0.0..500.0), dbl(d, "tmax", -60.0..50.0), dbl(d, "tmin", -60.0..50.0))
+                }
+            }
+            return FeedLevel(o?.optInt("alt", fallbackAlt) ?: fallbackAlt, cm(o, "now"), days)
         }
-        var rateLimited = false
-        var oldest = Long.MAX_VALUE
-        val bodies = urls.mapValues { (_, url) ->
-            val (body, time, limited) = cachedGet(url, maxAgeMs)
-            if (limited) rateLimited = true
-            oldest = minOf(oldest, time)
-            body
-        }
-        val parsed = bodies.mapValues { (level, body) ->
-            parse(body, stations.map { altitudeOf(it, level) }, withDepth = true)
-        }
-        val reports = stations.indices.associate { i ->
-            stations[i].id to SnowReport(
-                base = parsed.getValue(Level.BASE)[i],
-                top = parsed.getValue(Level.TOP)[i],
+        val out = stations.mapNotNull { s ->
+            val o = st.optJSONObject(s.id) ?: return@mapNotNull null
+            val l = ly?.optJSONObject(s.id)
+            s.id to StationFeed(
+                base = level(o.optJSONObject("base"), s.baseAlt),
+                mid = level(o.optJSONObject("mid"), s.midAlt),
+                top = level(o.optJSONObject("top"), s.topAlt),
+                lastYear = if (l != null && lyDate != null) HistoryReport(lyDate, cm(l, "base"), cm(l, "top")) else null,
             )
-        }
-        FetchResult(reports, oldest, rateLimited)
+        }.toMap()
+        val generated = runCatching { java.time.Instant.parse(root.optString("generated")) }.getOrNull()
+        return out to generated
     }
 
     /** Comparaison ICON / AROME pour une station : 2 requêtes de 2 points (bas et sommet). */
@@ -155,7 +203,7 @@ class SnowApi(cacheRoot: File) {
             "?latitude=" + alts.joinToString(",") { s.lat.toString() } +
             "&longitude=" + alts.joinToString(",") { s.lon.toString() } +
             "&elevation=" + alts.joinToString(",") +
-            "&hourly=snow_depth,freezing_level_height" +
+            "&hourly=freezing_level_height" +
             "&daily=snowfall_sum,rain_sum,temperature_2m_min,temperature_2m_max,wind_speed_10m_max,wind_gusts_10m_max" +
             "&forecast_days=7&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
         val (body, _, _) = cachedGet(url, DETAIL_MAX_AGE_MS)
@@ -178,26 +226,12 @@ class SnowApi(cacheRoot: File) {
         DetailReport(series[0], series[1], series[2], freezing)
     }
 
-    /** Favoris (alertes, widget) : neige au sommet + chutes prévues aujourd'hui et demain. */
-    suspend fun fetchFavorites(stations: List<Station>): Map<String, FavoriteSnow> = withContext(Dispatchers.IO) {
-        if (stations.isEmpty()) return@withContext emptyMap()
-        val url = "https://$API_HOST/v1/forecast" +
-            "?latitude=" + stations.joinToString(",") { it.lat.toString() } +
-            "&longitude=" + stations.joinToString(",") { it.lon.toString() } +
-            "&elevation=" + stations.joinToString(",") { it.topAlt.toString() } +
-            "&current=snow_depth&daily=snowfall_sum&forecast_days=2" +
-            "&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
-        val (body, _, _) = cachedGet(url, 2 * 3_600_000L)
-        val items = toObjects(body)
-        stations.indices.associate { i ->
-            val o = items.getOrNull(i)
-            val depth = o?.optJSONObject("current")?.optDouble("snow_depth", Double.NaN) ?: Double.NaN
-            val falls = o?.optJSONObject("daily")?.optJSONArray("snowfall_sum")
-            stations[i].id to FavoriteSnow(
-                topCm = depth.takeIf { !it.isNaN() && it in 0.0..30.0 }?.let { (it * 100).roundToInt() },
-                todayCm = num(falls, 0, 0.0..500.0),
-                tomorrowCm = num(falls, 1, 0.0..500.0),
-            )
+    /** Favoris (alertes, widget) : neige au sommet + chutes prévues aujourd'hui et demain, depuis snow.json. */
+    suspend fun fetchFavorites(stations: List<Station>): Map<String, FavoriteSnow> {
+        if (stations.isEmpty()) return emptyMap()
+        val r = fetchAll(stations, 30 * 60_000L)
+        return r.feed.mapValues { (_, f) ->
+            FavoriteSnow(f.top.nowCm, f.top.days.getOrNull(0)?.snowfallCm, f.top.days.getOrNull(1)?.snowfallCm)
         }
     }
 
