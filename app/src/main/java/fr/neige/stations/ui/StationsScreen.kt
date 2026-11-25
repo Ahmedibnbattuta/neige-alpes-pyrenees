@@ -1,5 +1,6 @@
 package fr.neige.stations.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -65,6 +66,7 @@ import fr.neige.stations.data.MAX_ALTITUDE
 import fr.neige.stations.data.MAX_LABEL
 import fr.neige.stations.data.MAX_SNOW_CM
 import fr.neige.stations.data.OfficialReading
+import fr.neige.stations.data.STATIONS
 import fr.neige.stations.data.SnowReport
 import fr.neige.stations.data.Station
 import java.time.Instant
@@ -76,7 +78,7 @@ import java.util.Locale
 
 /** Formate une date avec un motif pris dans les ressources de la langue courante. */
 @Composable
-private fun fmtDate(patternRes: Int, t: TemporalAccessor): String {
+internal fun fmtDate(patternRes: Int, t: TemporalAccessor): String {
     val locale: Locale = LocalConfiguration.current.locales[0]
     return DateTimeFormatter.ofPattern(stringResource(patternRes), locale).format(t)
 }
@@ -88,8 +90,20 @@ fun StationsScreen(vm: StationsViewModel) {
     val stations = state.visible
     var editing by remember { mutableStateOf<OfficialReading?>(null) }
     var showMap by rememberSaveable { mutableStateOf(false) }
+    var detailId by rememberSaveable { mutableStateOf<String?>(null) }
 
     CompositionLocalProvider(LocalUnits provides state.units) {
+        val detailStation = detailId?.let { id -> STATIONS.firstOrNull { it.id == id } }
+        if (detailStation != null) {
+            BackHandler { detailId = null }
+            StationDetailScreen(
+                station = detailStation,
+                detail = state.detail[detailStation.id],
+                history = state.history[detailStation.id],
+                onBack = { detailId = null },
+            )
+            return@CompositionLocalProvider
+        }
         editing?.let { r ->
             ReadingDialog(
                 initial = r,
@@ -214,6 +228,7 @@ fun StationsScreen(vm: StationsViewModel) {
                                 onEditReading = { editing = it },
                                 compare = state.compare[s.id],
                                 onCompare = { vm.loadCompare(s) },
+                                onOpen = { vm.openDetail(s); detailId = s.id },
                                 onAddReading = {
                                     editing = OfficialReading(
                                         stationId = s.id, label = "", altitude = null, snowCm = 0, date = LocalDate.now(),
@@ -245,6 +260,7 @@ private fun ChipRow(content: @Composable RowScope.() -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StationCard(
     station: Station,
@@ -255,10 +271,11 @@ private fun StationCard(
     onEditReading: (OfficialReading) -> Unit,
     compare: CompareUi?,
     onCompare: () -> Unit,
+    onOpen: () -> Unit,
     onAddReading: () -> Unit,
 ) {
     val u = LocalUnits.current
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    ElevatedCard(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {

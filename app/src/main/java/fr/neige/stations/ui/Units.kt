@@ -50,3 +50,18 @@ fun cmToInput(cm: Int, u: UnitSystem): Int = if (u == UnitSystem.METRIC) cm else
 fun inputToCm(v: Int, u: UnitSystem): Int = if (u == UnitSystem.METRIC) v else (v * CM_PER_IN).roundToInt()
 fun mToInput(m: Int, u: UnitSystem): Int = if (u == UnitSystem.METRIC) m else (m * FT_PER_M).roundToInt()
 fun inputToM(v: Int, u: UnitSystem): Int = if (u == UnitSystem.METRIC) v else (v / FT_PER_M).roundToInt()
+
+fun fmtRain(mm: Double?, u: UnitSystem): String = when {
+    mm == null -> "–"
+    u == UnitSystem.METRIC -> "${mm.roundToInt()} mm"
+    else -> String.format(Locale.US, "%.1f in", mm / 25.4)
+}
+
+fun fmtWind(kmh: Double?, u: UnitSystem): String = when {
+    kmh == null -> "–"
+    u == UnitSystem.METRIC -> "${kmh.roundToInt()} km/h"
+    else -> "${(kmh / 1.609344).roundToInt()} mph"
+}
+
+/** Valeur numérique dans l'unité choisie (pour les graphiques). */
+fun depthValue(cm: Int, u: UnitSystem): Float = if (u == UnitSystem.METRIC) cm.toFloat() else (cm / CM_PER_IN).toFloat()

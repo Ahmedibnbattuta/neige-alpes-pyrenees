@@ -91,4 +91,30 @@
     <string name="fmt_data_datetime">EEEE, MMMM d, yyyy \'at\' h:mm a</string>
     <string name="fmt_refresh_datetime">EEEE, MMMM d \'at\' h:mm a</string>
     <string name="fmt_date">EEEE, MMMM d, yyyy</string>
+
+    <!-- Écran de détail -->
+    <string name="detail_back">Back</string>
+    <string name="detail_now">Right now</string>
+    <string name="detail_chart_depth">Snow depth, next 7 days</string>
+    <string name="detail_chart_falls">Daily snowfall at the top</string>
+    <string name="col_day">Day</string>
+    <string name="col_snow">Snow</string>
+    <string name="col_rain">Rain</string>
+    <string name="col_temp">Min / max</string>
+    <string name="col_wind">Gusts</string>
+    <string name="col_freezing">0 °C level</string>
+    <string name="detail_table_title">Day by day (top of the ski area)</string>
+    <string name="history_title">Same date last year</string>
+    <string name="history_text">%1$s: %2$s at the base, %3$s at the top.</string>
+    <string name="history_note">Source: ERA5-Land reanalysis (Copernicus), coarser than the forecast models: compare trends rather than exact values.</string>
+    <string name="history_error">History unavailable right now.</string>
+    <string name="links_title">Check on site</string>
+    <string name="link_official">Official snow report</string>
+    <string name="link_webcam">Webcams</string>
+    <string name="link_avalanche">Avalanche bulletin</string>
+    <string name="links_note">Links open a web search, so you always reach the current page of the resort or the avalanche service.</string>
+    <string name="alt_estimated">Altitudes estimated (resort inside a larger ski area).</string>
+    <string name="alt_verified">Altitudes from skiresort.info.</string>
+    <string name="fmt_day">EEE d</string>
+    <string name="open_detail">Details</string>
 </resources>

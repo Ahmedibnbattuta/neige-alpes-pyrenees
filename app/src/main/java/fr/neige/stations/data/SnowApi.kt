@@ -9,6 +9,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.security.MessageDigest
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
@@ -46,9 +47,41 @@ data class FetchResult(
     val rateLimited: Boolean,     // true si la limite d'appels a été atteinte (données plus anciennes)
 )
 
+/** Prévision d'une journée à une altitude. */
+data class DayForecast(
+    val date: LocalDate,
+    val snowfallCm: Double?,
+    val rainMm: Double?,
+    val tMinC: Double?,
+    val tMaxC: Double?,
+    val windMaxKmh: Double?,
+    val gustMaxKmh: Double?,
+)
+
+/** Série sur 7 jours pour une altitude. */
+data class LevelSeries(
+    val altitude: Int,
+    val times: List<LocalDateTime>,
+    val depthCm: List<Int?>,     // hauteur de neige horaire
+    val days: List<DayForecast>,
+)
+
+/** Données de l'écran de détail : bas, milieu, sommet + isotherme 0 °C par jour. */
+data class DetailReport(
+    val base: LevelSeries,
+    val mid: LevelSeries,
+    val top: LevelSeries,
+    val freezingMaxM: Map<LocalDate, Int>,
+)
+
+/** Neige à la même date l'an dernier (réanalyse ERA5-Land, résolution ~9 km). */
+data class HistoryReport(val date: LocalDate, val baseCm: Int?, val topCm: Int?)
+
 class RateLimitException : Exception("limite d'appels du service météo atteinte")
 
 private const val API_HOST = "api.open-meteo.com"
+private const val ARCHIVE_HOST = "archive-api.open-meteo.com"
+private val ALLOWED_HOSTS = setOf(API_HOST, ARCHIVE_HOST)
 private const val MAX_RESPONSE_BYTES = 2_000_000
 
 private enum class Level { BASE, MID, TOP }
@@ -108,6 +141,95 @@ class SnowApi(cacheRoot: File) {
         val arome = load(Model.AROME)
         if (icon == null && arome == null) throw IllegalStateException("comparaison indisponible pour le moment")
         CompareReport(icon, arome)
+    }
+
+    /** Écran de détail : 1 requête, 3 points (bas, milieu, sommet), 7 jours. */
+    suspend fun fetchDetail(s: Station): DetailReport = withContext(Dispatchers.IO) {
+        val alts = listOf(s.baseAlt, s.midAlt, s.topAlt)
+        val url = "https://$API_HOST/v1/forecast" +
+            "?latitude=" + alts.joinToString(",") { s.lat.toString() } +
+            "&longitude=" + alts.joinToString(",") { s.lon.toString() } +
+            "&elevation=" + alts.joinToString(",") +
+            "&hourly=snow_depth,freezing_level_height" +
+            "&daily=snowfall_sum,rain_sum,temperature_2m_min,temperature_2m_max,wind_speed_10m_max,wind_gusts_10m_max" +
+            "&forecast_days=7&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
+        val (body, _, _) = cachedGet(url, DETAIL_MAX_AGE_MS)
+        val items = toObjects(body)
+        require(items.size >= 3) { "réponse incomplète" }
+        val series = alts.mapIndexed { i, alt -> parseSeries(items[i], alt) }
+
+        // Isotherme 0 °C : maximum de la journée (identique pour les 3 points).
+        val freezing = mutableMapOf<LocalDate, Int>()
+        items[0].optJSONObject("hourly")?.let { h ->
+            val t = h.optJSONArray("time")
+            val f = h.optJSONArray("freezing_level_height")
+            if (t != null && f != null) for (k in 0 until minOf(t.length(), f.length())) {
+                val v = f.optDouble(k, Double.NaN)
+                if (v.isNaN() || v !in -500.0..9000.0) continue
+                val d = runCatching { LocalDateTime.parse(t.getString(k)).toLocalDate() }.getOrNull() ?: continue
+                freezing[d] = maxOf(freezing[d] ?: Int.MIN_VALUE, v.roundToInt())
+            }
+        }
+        DetailReport(series[0], series[1], series[2], freezing)
+    }
+
+    /** Même date l'an dernier, bas et sommet (ERA5-Land). */
+    suspend fun fetchHistory(s: Station, today: LocalDate): HistoryReport = withContext(Dispatchers.IO) {
+        val date = today.minusYears(1)
+        val url = "https://$ARCHIVE_HOST/v1/archive" +
+            "?latitude=${s.lat},${s.lat}&longitude=${s.lon},${s.lon}" +
+            "&elevation=${s.baseAlt},${s.topAlt}" +
+            "&start_date=$date&end_date=$date&hourly=snow_depth&models=era5_land" +
+            "&timezone=" + URLEncoder.encode("Europe/Paris", "UTF-8")
+        // Les données passées ne changent pas : cache d'une semaine.
+        val (body, _, _) = cachedGet(url, 7 * 24 * 3_600_000L)
+        val items = toObjects(body)
+        fun noon(i: Int): Int? {
+            val h = items.getOrNull(i)?.optJSONObject("hourly") ?: return null
+            val v = h.optJSONArray("snow_depth")?.optDouble(12, Double.NaN) ?: Double.NaN
+            return v.takeIf { !it.isNaN() && it in 0.0..30.0 }?.let { (it * 100).roundToInt() }
+        }
+        HistoryReport(date, noon(0), noon(1))
+    }
+
+    private fun toObjects(rawBody: String): List<JSONObject> {
+        val body = rawBody.trim()
+        return if (body.startsWith("[")) {
+            val arr = JSONArray(body)
+            List(arr.length()) { arr.getJSONObject(it) }
+        } else listOf(JSONObject(body))
+    }
+
+    private fun num(arr: JSONArray?, k: Int, range: ClosedFloatingPointRange<Double>): Double? =
+        arr?.optDouble(k, Double.NaN)?.takeIf { !it.isNaN() && it in range }
+
+    private fun parseSeries(o: JSONObject, alt: Int): LevelSeries {
+        val h = o.optJSONObject("hourly")
+        val ht = h?.optJSONArray("time")
+        val hd = h?.optJSONArray("snow_depth")
+        val times = mutableListOf<LocalDateTime>()
+        val depth = mutableListOf<Int?>()
+        if (ht != null) for (k in 0 until ht.length()) {
+            val t = runCatching { LocalDateTime.parse(ht.getString(k)) }.getOrNull() ?: continue
+            times += t
+            depth += num(hd, k, 0.0..30.0)?.let { (it * 100).roundToInt() }
+        }
+        val d = o.optJSONObject("daily")
+        val dt = d?.optJSONArray("time")
+        val days = mutableListOf<DayForecast>()
+        if (dt != null) for (k in 0 until dt.length()) {
+            val date = runCatching { LocalDate.parse(dt.getString(k)) }.getOrNull() ?: continue
+            days += DayForecast(
+                date = date,
+                snowfallCm = num(d.optJSONArray("snowfall_sum"), k, 0.0..500.0),
+                rainMm = num(d.optJSONArray("rain_sum"), k, 0.0..1000.0),
+                tMinC = num(d.optJSONArray("temperature_2m_min"), k, -60.0..50.0),
+                tMaxC = num(d.optJSONArray("temperature_2m_max"), k, -60.0..50.0),
+                windMaxKmh = num(d.optJSONArray("wind_speed_10m_max"), k, 0.0..400.0),
+                gustMaxKmh = num(d.optJSONArray("wind_gusts_10m_max"), k, 0.0..500.0),
+            )
+        }
+        return LevelSeries(alt, times, depth, days)
     }
 
     private data class Point(val lat: Double, val lon: Double, val elevation: Int)
@@ -201,12 +323,13 @@ class SnowApi(cacheRoot: File) {
 
     private companion object {
         const val COMPARE_MAX_AGE_MS = 30 * 60_000L
+        const val DETAIL_MAX_AGE_MS = 60 * 60_000L
     }
 
     private fun httpGet(url: String): String {
         val u = URL(url)
         // Seule l'API Open-Meteo, en HTTPS, est autorisée.
-        require(u.protocol == "https" && u.host == API_HOST) { "Adresse non autorisée" }
+        require(u.protocol == "https" && u.host in ALLOWED_HOSTS) { "Adresse non autorisée" }
         val conn = u.openConnection() as HttpURLConnection
         conn.connectTimeout = 15_000
         conn.readTimeout = 20_000

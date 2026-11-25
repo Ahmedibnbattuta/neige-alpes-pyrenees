@@ -91,4 +91,30 @@
     <string name="fmt_data_datetime">EEEE d MMMM yyyy \'à\' HH\'h\'mm</string>
     <string name="fmt_refresh_datetime">EEEE d MMMM \'à\' HH\'h\'mm</string>
     <string name="fmt_date">EEEE d MMMM yyyy</string>
+
+    <!-- Écran de détail -->
+    <string name="detail_back">Retour</string>
+    <string name="detail_now">En ce moment</string>
+    <string name="detail_chart_depth">Hauteur de neige sur 7 jours</string>
+    <string name="detail_chart_falls">Chutes de neige par jour au sommet</string>
+    <string name="col_day">Jour</string>
+    <string name="col_snow">Neige</string>
+    <string name="col_rain">Pluie</string>
+    <string name="col_temp">Min / max</string>
+    <string name="col_wind">Rafales</string>
+    <string name="col_freezing">Iso 0 °C</string>
+    <string name="detail_table_title">Jour par jour (sommet du domaine)</string>
+    <string name="history_title">Même date l\'an dernier</string>
+    <string name="history_text">%1$s : %2$s en bas, %3$s au sommet.</string>
+    <string name="history_note">Source : réanalyse ERA5-Land (Copernicus), moins précise que les modèles de prévision : comparez les tendances plutôt que les valeurs exactes.</string>
+    <string name="history_error">Historique indisponible pour le moment.</string>
+    <string name="links_title">Vérifier sur place</string>
+    <string name="link_official">Bulletin neige officiel</string>
+    <string name="link_webcam">Webcams</string>
+    <string name="link_avalanche">Bulletin avalanche</string>
+    <string name="links_note">Les liens ouvrent une recherche web, pour toujours tomber sur la page à jour de la station ou du service avalanche.</string>
+    <string name="alt_estimated">Altitudes estimées (station incluse dans un grand domaine).</string>
+    <string name="alt_verified">Altitudes : skiresort.info.</string>
+    <string name="fmt_day">EEE d</string>
+    <string name="open_detail">Détails</string>
 </resources>

@@ -7,6 +7,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.neige.stations.R
 import fr.neige.stations.data.CompareReport
+import fr.neige.stations.data.DetailReport
+import fr.neige.stations.data.HistoryReport
 import fr.neige.stations.data.OfficialReading
 import fr.neige.stations.data.OfficialReadingsStore
 import fr.neige.stations.data.Range
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.Normalizer
+import java.time.LocalDate
 
 enum class Filter(@StringRes val labelRes: Int) {
     ALL(R.string.filter_all), ALPES(R.string.filter_alps), PYRENEES(R.string.filter_pyrenees), FAVORITES(R.string.filter_favorites)
@@ -42,6 +45,8 @@ data class UiState(
     val readings: List<OfficialReading> = emptyList(),
     @StringRes val notice: Int? = null,
     val compare: Map<String, CompareUi> = emptyMap(),
+    val detail: Map<String, LoadUi<DetailReport>> = emptyMap(),
+    val history: Map<String, LoadUi<HistoryReport>> = emptyMap(),
 ) {
     fun readingsFor(stationId: String) = readings.filter { it.stationId == stationId }
 
@@ -66,6 +71,13 @@ data class UiState(
                 Sort.NAME -> filtered.sortedBy { it.name.normalized() }
             }
         }
+}
+
+/** État d'un chargement à la demande. */
+sealed interface LoadUi<out T> {
+    data object Loading : LoadUi<Nothing>
+    data class Loaded<T>(val value: T) : LoadUi<T>
+    data class Failed(@StringRes val messageRes: Int) : LoadUi<Nothing>
 }
 
 /** État de la comparaison des modèles pour une station. */
@@ -178,6 +190,35 @@ class StationsViewModel(app: Application) : AndroidViewModel(app) {
                 CompareUi.Failed(R.string.compare_err)
             }
             _state.update { it.copy(compare = it.compare + (station.id to ui)) }
+        }
+    }
+
+    /** Écran de détail : prévision 7 jours + historique, chargés à l'ouverture. */
+    fun openDetail(station: Station) {
+        val st = _state.value
+        if (st.detail[station.id] !is LoadUi.Loaded && st.detail[station.id] !is LoadUi.Loading) {
+            _state.update { it.copy(detail = it.detail + (station.id to LoadUi.Loading)) }
+            viewModelScope.launch {
+                val ui: LoadUi<DetailReport> = try {
+                    LoadUi.Loaded(api.fetchDetail(station))
+                } catch (e: RateLimitException) {
+                    LoadUi.Failed(R.string.err_rate_limit)
+                } catch (e: Exception) {
+                    LoadUi.Failed(R.string.err_load)
+                }
+                _state.update { it.copy(detail = it.detail + (station.id to ui)) }
+            }
+        }
+        if (st.history[station.id] !is LoadUi.Loaded && st.history[station.id] !is LoadUi.Loading) {
+            _state.update { it.copy(history = it.history + (station.id to LoadUi.Loading)) }
+            viewModelScope.launch {
+                val ui: LoadUi<HistoryReport> = try {
+                    LoadUi.Loaded(api.fetchHistory(station, LocalDate.now()))
+                } catch (e: Exception) {
+                    LoadUi.Failed(R.string.history_error)
+                }
+                _state.update { it.copy(history = it.history + (station.id to ui)) }
+            }
         }
     }
 
