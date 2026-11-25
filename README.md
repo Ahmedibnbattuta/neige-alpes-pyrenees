@@ -11,7 +11,7 @@ sur 3 jours et température au sommet.
 - Tri : neige au sommet, neige en bas, altitude, nom
 - Favoris mémorisés sur le téléphone
 - Thème clair / sombre automatique
-- Français et anglais (selon la langue du téléphone)
+- Anglais par défaut ; français, italien et allemand au choix (menu ⋮ > Language)
 - Unités métriques ou américaines (in, ft, °F), bouton en haut de l'écran
 
 ## Source des données

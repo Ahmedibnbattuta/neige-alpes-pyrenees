@@ -21,6 +21,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import fr.neige.stations.LocaleHelper
 import fr.neige.stations.MainActivity
 import fr.neige.stations.R
 import fr.neige.stations.data.SnowApi
@@ -76,7 +77,8 @@ class SnowWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         return Result.success()
     }
 
-    private fun notify(ctx: Context, id: Int, name: String, amount: String) {
+    private fun notify(base: Context, id: Int, name: String, amount: String) {
+        val ctx = LocaleHelper.wrap(base)
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return

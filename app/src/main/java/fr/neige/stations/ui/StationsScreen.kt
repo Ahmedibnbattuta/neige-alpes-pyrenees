@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -98,6 +99,7 @@ fun StationsScreen(vm: StationsViewModel) {
     var detailId by rememberSaveable { mutableStateOf<String?>(null) }
     var showAlerts by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
+    var showLanguage by rememberSaveable { mutableStateOf(false) }
 
     CompositionLocalProvider(LocalUnits provides state.units) {
         val detailStation = detailId?.let { id -> STATIONS.firstOrNull { it.id == id } }
@@ -121,6 +123,7 @@ fun StationsScreen(vm: StationsViewModel) {
                 onDismiss = { showAlerts = false },
             )
         }
+        if (showLanguage) LanguageDialog(onDismiss = { showLanguage = false })
         editing?.let { r ->
             ReadingDialog(
                 initial = r,
@@ -166,6 +169,11 @@ fun StationsScreen(vm: StationsViewModel) {
                                     text = { Text(stringResource(R.string.menu_alerts)) },
                                     leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) },
                                     onClick = { menuOpen = false; showAlerts = true },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_language)) },
+                                    leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                                    onClick = { menuOpen = false; showLanguage = true },
                                 )
                             }
                         }

@@ -134,4 +134,8 @@
     <string name="widget_title">Snow · favorites</string>
     <string name="widget_empty">Add favorites in the app (heart icon).</string>
     <string name="widget_desc">Snow at the top of your favorite resorts.</string>
+
+    <!-- Langue -->
+    <string name="menu_language">Language</string>
+    <string name="language_title">Language</string>
 </resources>

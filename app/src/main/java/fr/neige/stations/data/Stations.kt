@@ -7,15 +7,15 @@ import fr.neige.stations.R
 
 enum class Range(@StringRes val labelRes: Int) { ALPES(R.string.range_alps), PYRENEES(R.string.range_pyrenees) }
 
-/** [searchNames] : noms français et anglais, pour que la recherche marche dans les deux langues. */
+/** [searchNames] : noms en français, anglais, italien et allemand, pour que la recherche marche dans toutes les langues. */
 enum class Country(@StringRes val labelRes: Int, val flag: String, val searchNames: List<String>) {
-    FR(R.string.country_fr, "🇫🇷", listOf("France")),
-    CH(R.string.country_ch, "🇨🇭", listOf("Suisse", "Switzerland")),
-    AT(R.string.country_at, "🇦🇹", listOf("Autriche", "Austria")),
-    IT(R.string.country_it, "🇮🇹", listOf("Italie", "Italy")),
-    DE(R.string.country_de, "🇩🇪", listOf("Allemagne", "Germany")),
-    SI(R.string.country_si, "🇸🇮", listOf("Slovénie", "Slovenia")),
-    ES(R.string.country_es, "🇪🇸", listOf("Espagne", "Spain")),
+    FR(R.string.country_fr, "🇫🇷", listOf("France", "Francia", "Frankreich")),
+    CH(R.string.country_ch, "🇨🇭", listOf("Suisse", "Switzerland", "Svizzera", "Schweiz")),
+    AT(R.string.country_at, "🇦🇹", listOf("Autriche", "Austria", "Österreich")),
+    IT(R.string.country_it, "🇮🇹", listOf("Italie", "Italy", "Italia", "Italien")),
+    DE(R.string.country_de, "🇩🇪", listOf("Allemagne", "Germany", "Germania", "Deutschland")),
+    SI(R.string.country_si, "🇸🇮", listOf("Slovénie", "Slovenia", "Slowenien")),
+    ES(R.string.country_es, "🇪🇸", listOf("Espagne", "Spain", "Spagna", "Spanien")),
     AD(R.string.country_ad, "🇦🇩", listOf("Andorre", "Andorra")),
 }
 

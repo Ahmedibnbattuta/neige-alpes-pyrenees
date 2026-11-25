@@ -134,4 +134,8 @@
     <string name="widget_title">Neige · favoris</string>
     <string name="widget_empty">Ajoutez des favoris dans l\'app (icône cœur).</string>
     <string name="widget_desc">Neige au sommet de vos stations favorites.</string>
+
+    <!-- Langue -->
+    <string name="menu_language">Langue</string>
+    <string name="language_title">Langue</string>
 </resources>

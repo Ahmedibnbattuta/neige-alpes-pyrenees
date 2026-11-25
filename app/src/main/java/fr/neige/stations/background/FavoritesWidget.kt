@@ -24,6 +24,7 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import fr.neige.stations.LocaleHelper
 import fr.neige.stations.MainActivity
 import fr.neige.stations.R
 import fr.neige.stations.ui.UnitSystem
@@ -37,8 +38,9 @@ class FavoritesWidget : GlanceAppWidget() {
         val (rows, _) = WidgetData.load(context)
         val units = context.getSharedPreferences("neige", Context.MODE_PRIVATE).getString("units", null)
             ?.let { runCatching { UnitSystem.valueOf(it) }.getOrNull() } ?: UnitSystem.default()
-        val title = context.getString(R.string.widget_title)
-        val empty = context.getString(R.string.widget_empty)
+        val localized = LocaleHelper.wrap(context)
+        val title = localized.getString(R.string.widget_title)
+        val empty = localized.getString(R.string.widget_empty)
         provideContent {
             GlanceTheme { Content(title, empty, rows, units) }
         }
