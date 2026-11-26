@@ -27,6 +27,7 @@ ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 LEVELS = ("base", "mid", "top")
 FORECAST_DAYS = 7
 MAX_BATCH_WEIGHT = 450      # appels « pondérés » par requête (limite : 600 / minute)
+MAX_BATCH_POINTS = 100      # points par requête : au-delà, l'adresse devient trop longue (erreur 414)
 PAUSE_BETWEEN_BATCHES = 62  # secondes
 
 # ---------------------------------------------------------------------------
@@ -123,7 +124,7 @@ def fetch_daily(points, base_url, params, days_per_point):
     """points = [(lat, lon, elev)] -> liste de dict 'daily' (un par point), par lots."""
     out = []
     per = weight(days_per_point)
-    size = max(1, int(MAX_BATCH_WEIGHT // per))
+    size = max(1, min(MAX_BATCH_POINTS, int(MAX_BATCH_WEIGHT // per)))
     batches = [points[i:i + size] for i in range(0, len(points), size)]
     for n, b in enumerate(batches):
         if n:
