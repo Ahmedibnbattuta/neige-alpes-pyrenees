@@ -5,7 +5,9 @@ import androidx.annotation.StringRes
 import org.json.JSONArray
 import fr.neige.stations.R
 
-enum class Range(@StringRes val labelRes: Int) { ALPES(R.string.range_alps), PYRENEES(R.string.range_pyrenees) }
+enum class Range(@StringRes val labelRes: Int) {
+    ALPES(R.string.range_alps), PYRENEES(R.string.range_pyrenees), ATLAS(R.string.range_atlas), TURQUIE(R.string.range_turkey)
+}
 
 /** [searchNames] : noms en français, anglais, italien et allemand, pour que la recherche marche dans toutes les langues. */
 enum class Country(@StringRes val labelRes: Int, val flag: String, val searchNames: List<String>) {
@@ -17,6 +19,9 @@ enum class Country(@StringRes val labelRes: Int, val flag: String, val searchNam
     SI(R.string.country_si, "🇸🇮", listOf("Slovénie", "Slovenia", "Slowenien")),
     ES(R.string.country_es, "🇪🇸", listOf("Espagne", "Spain", "Spagna", "Spanien")),
     AD(R.string.country_ad, "🇦🇩", listOf("Andorre", "Andorra")),
+    MA(R.string.country_ma, "🇲🇦", listOf("Maroc", "Morocco", "Marocco", "Marokko")),
+    DZ(R.string.country_dz, "🇩🇿", listOf("Algérie", "Algeria", "Algerien")),
+    TR(R.string.country_tr, "🇹🇷", listOf("Turquie", "Turkey", "Türkiye", "Turchia", "Türkei")),
 }
 
 /**

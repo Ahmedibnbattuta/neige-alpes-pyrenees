@@ -12,6 +12,8 @@
     <string name="filter_all">All</string>
     <string name="filter_alps">Alps</string>
     <string name="filter_pyrenees">Pyrenees</string>
+    <string name="filter_atlas">Atlas</string>
+    <string name="filter_turkey">Turkey</string>
     <string name="filter_favorites">Favorites</string>
     <string name="sort_snow_top">Snow at top</string>
     <string name="sort_snow_base">Snow at base</string>
@@ -20,6 +22,8 @@
 
     <string name="range_alps">Alps</string>
     <string name="range_pyrenees">Pyrenees</string>
+    <string name="range_atlas">Atlas</string>
+    <string name="range_turkey">Turkey</string>
     <string name="country_fr">France</string>
     <string name="country_ch">Switzerland</string>
     <string name="country_at">Austria</string>
@@ -28,6 +32,9 @@
     <string name="country_si">Slovenia</string>
     <string name="country_es">Spain</string>
     <string name="country_ad">Andorra</string>
+    <string name="country_ma">Morocco</string>
+    <string name="country_dz">Algeria</string>
+    <string name="country_tr">Turkey</string>
 
     <plurals name="stations_count">
         <item quantity="one">%1$d resort</item>

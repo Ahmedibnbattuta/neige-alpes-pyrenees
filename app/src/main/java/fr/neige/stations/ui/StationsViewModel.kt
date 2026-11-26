@@ -27,7 +27,8 @@ import java.text.Normalizer
 import java.time.LocalDate
 
 enum class Filter(@StringRes val labelRes: Int) {
-    ALL(R.string.filter_all), ALPES(R.string.filter_alps), PYRENEES(R.string.filter_pyrenees), FAVORITES(R.string.filter_favorites)
+    ALL(R.string.filter_all), ALPES(R.string.filter_alps), PYRENEES(R.string.filter_pyrenees),
+    ATLAS(R.string.filter_atlas), TURQUIE(R.string.filter_turkey), FAVORITES(R.string.filter_favorites)
 }
 enum class Sort(@StringRes val labelRes: Int) {
     SNOW_TOP(R.string.sort_snow_top), SNOW_BASE(R.string.sort_snow_base), ALTITUDE(R.string.sort_altitude), NAME(R.string.sort_name)
@@ -61,6 +62,8 @@ data class UiState(
                     Filter.ALL -> true
                     Filter.ALPES -> s.range == Range.ALPES
                     Filter.PYRENEES -> s.range == Range.PYRENEES
+                    Filter.ATLAS -> s.range == Range.ATLAS
+                    Filter.TURQUIE -> s.range == Range.TURQUIE
                     Filter.FAVORITES -> s.id in favorites
                 }
                 val okQuery = q.isEmpty() || (listOf(s.name, s.massif) + s.country.searchNames)

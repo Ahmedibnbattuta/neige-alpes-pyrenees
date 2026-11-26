@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Neige Alpes &amp; Pyrénées</title>
-<meta name="description" content="Hauteur de neige en bas et au sommet de 153 stations de ski des Alpes et des Pyrénées.">
+<meta name="description" content="Hauteur de neige en bas et au sommet de 168 stations de ski des Alpes et des Pyrénées.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -76,9 +76,9 @@ a{color:var(--glacier)}
   <div class="hero-in">
     <div>
       <h1 id="t-title">Neige Alpes &amp; Pyrénées</h1>
-      <p class="lead" id="t-lead">Hauteur de neige en bas et au sommet de 153 stations, estimée à l'altitude exacte de chaque domaine et mise à jour toutes les 2 heures.</p>
+      <p class="lead" id="t-lead">Hauteur de neige en bas et au sommet de 168 stations, estimée à l'altitude exacte de chaque domaine et mise à jour toutes les 2 heures.</p>
       <div class="stats">
-        <div><b id="s-count">153</b><span id="t-stations">stations</span></div>
+        <div><b id="s-count">168</b><span id="t-stations">stations</span></div>
         <div><b id="s-max">–</b><span id="t-max">record au sommet</span></div>
         <div><b id="s-fall">–</b><span id="t-fall">chutes prévues, 3 j (max)</span></div>
       </div>
@@ -92,6 +92,8 @@ a{color:var(--glacier)}
   <button id="f-ALL" aria-pressed="true">Toutes</button>
   <button id="f-ALPES" aria-pressed="false">Alpes</button>
   <button id="f-PYRENEES" aria-pressed="false">Pyrénées</button>
+  <button id="f-ATLAS" aria-pressed="false">Atlas</button>
+  <button id="f-TURQUIE" aria-pressed="false">Turquie</button>
   <select id="sort" aria-label="Trier">
     <option value="top">Neige au sommet</option>
     <option value="base">Neige en bas</option>
@@ -124,40 +126,40 @@ const LANGS = {
   en: { locale:'en-US', name:'English',
     loading:'Loading data…', updated:'Data from ', err:'Weather data unavailable right now. Try again in a few minutes.',
     base:'Base', top:'Top', fall:'3 days', none:'No resort matches your search.', est:'estimated altitudes',
-    countries:{FR:'France',CH:'Switzerland',AT:'Austria',IT:'Italy',DE:'Germany',SI:'Slovenia',ES:'Spain',AD:'Andorra'},
-    ranges:{ALPES:'Alps',PYRENEES:'Pyrenees'}, search:'Search a resort, area or country', sorts:['Snow at top','Snow at base','Altitude','Name'],
-    ui:{'t-title':'Alps & Pyrenees Snow','t-lead':'Snow depth at the base and at the top of 153 resorts, estimated at the exact altitude of each ski area and updated every 2 hours.',
-      't-stations':'resorts','t-max':'deepest at the top','t-fall':'3-day snowfall (max)','f-ALL':'All','f-ALPES':'Alps','f-PYRENEES':'Pyrenees',
+    countries:{FR:'France',CH:'Switzerland',AT:'Austria',IT:'Italy',DE:'Germany',SI:'Slovenia',ES:'Spain',AD:'Andorra',MA:'Morocco',DZ:'Algeria',TR:'Turkey'},
+    ranges:{ALPES:'Alps',PYRENEES:'Pyrenees',ATLAS:'Atlas',TURQUIE:'Turkey'}, search:'Search a resort, area or country', sorts:['Snow at top','Snow at base','Altitude','Name'],
+    ui:{'t-title':'Alps & Pyrenees Snow','t-lead':'Snow depth at the base and at the top of 168 resorts, estimated at the exact altitude of each ski area and updated every 2 hours.',
+      't-stations':'resorts','t-max':'deepest at the top','t-fall':'3-day snowfall (max)','f-ALL':'All','f-ALPES':'Alps','f-PYRENEES':'Pyrenees','f-ATLAS':'Atlas','f-TURQUIE':'Turkey',
       't-note':"Snow depth is simulated at each altitude since the start of the season from Open-Meteo data (CC BY 4.0), updated every 2 hours: estimates, not the resorts' official reports. Always check the resort snow report and the avalanche bulletin before you go. Ski area altitudes: skiresort.info. Map © OpenStreetMap contributors.",
       't-top-top':'Top 10 · snowiest at the top','t-top-base':'Top 10 · snowiest at the base',
       't-privacy':'Privacy policy','t-app':'Also available as an Android app.'} },
   fr: { locale:'fr-FR', name:'Français',
     loading:'Chargement des données…', updated:'Données du ', err:'Données météo indisponibles pour le moment. Réessayez dans quelques minutes.',
     base:'Bas', top:'Sommet', fall:'3 jours', none:'Aucune station ne correspond à votre recherche.', est:'altitudes estimées',
-    countries:{FR:'France',CH:'Suisse',AT:'Autriche',IT:'Italie',DE:'Allemagne',SI:'Slovénie',ES:'Espagne',AD:'Andorre'},
-    ranges:{ALPES:'Alpes',PYRENEES:'Pyrénées'}, search:'Rechercher une station, un massif, un pays', sorts:['Neige au sommet','Neige en bas','Altitude','Nom'],
-    ui:{'t-title':'Neige Alpes & Pyrénées','t-lead':"Hauteur de neige en bas et au sommet de 153 stations, estimée à l'altitude exacte de chaque domaine et mise à jour toutes les 2 heures.",
-      't-stations':'stations','t-max':'record au sommet','t-fall':'chutes prévues, 3 j (max)','f-ALL':'Toutes','f-ALPES':'Alpes','f-PYRENEES':'Pyrénées',
+    countries:{FR:'France',CH:'Suisse',AT:'Autriche',IT:'Italie',DE:'Allemagne',SI:'Slovénie',ES:'Espagne',AD:'Andorre',MA:'Maroc',DZ:'Algérie',TR:'Turquie'},
+    ranges:{ALPES:'Alpes',PYRENEES:'Pyrénées',ATLAS:'Atlas',TURQUIE:'Turquie'}, search:'Rechercher une station, un massif, un pays', sorts:['Neige au sommet','Neige en bas','Altitude','Nom'],
+    ui:{'t-title':'Neige Alpes & Pyrénées','t-lead':"Hauteur de neige en bas et au sommet de 168 stations, estimée à l'altitude exacte de chaque domaine et mise à jour toutes les 2 heures.",
+      't-stations':'stations','t-max':'record au sommet','t-fall':'chutes prévues, 3 j (max)','f-ALL':'Toutes','f-ALPES':'Alpes','f-PYRENEES':'Pyrénées','f-ATLAS':'Atlas','f-TURQUIE':'Turquie',
       't-note':'Hauteurs de neige estimées par modèles météo (Open-Meteo, licence CC BY 4.0) : ce ne sont pas les relevés officiels des stations. Vérifiez toujours le bulletin de la station et le bulletin avalanche avant de partir. Altitudes des domaines : skiresort.info. Fond de carte © contributeurs OpenStreetMap.',
       't-top-top':'Top 10 · plus enneigées au sommet','t-top-base':'Top 10 · plus enneigées en bas',
       't-privacy':'Politique de confidentialité','t-app':'Existe aussi en application Android.'} },
   it: { locale:'it-IT', name:'Italiano',
     loading:'Caricamento dei dati…', updated:'Dati del ', err:'Dati meteo non disponibili al momento. Riprova tra qualche minuto.',
     base:'Valle', top:'Vetta', fall:'3 giorni', none:'Nessuna stazione corrisponde alla ricerca.', est:'altitudini stimate',
-    countries:{FR:'Francia',CH:'Svizzera',AT:'Austria',IT:'Italia',DE:'Germania',SI:'Slovenia',ES:'Spagna',AD:'Andorra'},
-    ranges:{ALPES:'Alpi',PYRENEES:'Pirenei'}, search:'Cerca una stazione, un massiccio, un paese', sorts:['Neve in vetta','Neve a valle','Altitudine','Nome'],
-    ui:{'t-title':'Neve Alpi & Pirenei','t-lead':"Altezza della neve a valle e in vetta di 153 stazioni, stimata all'altitudine esatta di ogni comprensorio e aggiornata ogni 2 ore.",
-      't-stations':'stazioni','t-max':'massimo in vetta','t-fall':'nevicate previste, 3 g (max)','f-ALL':'Tutte','f-ALPES':'Alpi','f-PYRENEES':'Pirenei',
+    countries:{FR:'Francia',CH:'Svizzera',AT:'Austria',IT:'Italia',DE:'Germania',SI:'Slovenia',ES:'Spagna',AD:'Andorra',MA:'Marocco',DZ:'Algeria',TR:'Turchia'},
+    ranges:{ALPES:'Alpi',PYRENEES:'Pirenei',ATLAS:'Atlante',TURQUIE:'Turchia'}, search:'Cerca una stazione, un massiccio, un paese', sorts:['Neve in vetta','Neve a valle','Altitudine','Nome'],
+    ui:{'t-title':'Neve Alpi & Pirenei','t-lead':"Altezza della neve a valle e in vetta di 168 stazioni, stimata all'altitudine esatta di ogni comprensorio e aggiornata ogni 2 ore.",
+      't-stations':'stazioni','t-max':'massimo in vetta','t-fall':'nevicate previste, 3 g (max)','f-ALL':'Tutte','f-ALPES':'Alpi','f-PYRENEES':'Pirenei','f-ATLAS':'Atlante','f-TURQUIE':'Turchia',
       't-note':'Altezza della neve simulata a ogni altitudine dall\'inizio della stagione a partire dai dati Open-Meteo (licenza CC BY 4.0), aggiornata ogni 2 ore: sono stime, non i bollettini ufficiali delle stazioni. Controlla sempre il bollettino della stazione e il bollettino valanghe prima di partire. Altitudini dei comprensori: skiresort.info. Mappa © collaboratori di OpenStreetMap.',
       't-top-top':'Top 10 · più innevate in vetta','t-top-base':'Top 10 · più innevate a valle',
       't-privacy':'Informativa sulla privacy','t-app':"Disponibile anche come app Android."} },
   de: { locale:'de-DE', name:'Deutsch',
     loading:'Daten werden geladen…', updated:'Daten vom ', err:'Wetterdaten derzeit nicht verfügbar. Versuche es in ein paar Minuten erneut.',
     base:'Tal', top:'Berg', fall:'3 Tage', none:'Kein Skigebiet entspricht deiner Suche.', est:'Höhen geschätzt',
-    countries:{FR:'Frankreich',CH:'Schweiz',AT:'Österreich',IT:'Italien',DE:'Deutschland',SI:'Slowenien',ES:'Spanien',AD:'Andorra'},
-    ranges:{ALPES:'Alpen',PYRENEES:'Pyrenäen'}, search:'Skigebiet, Region oder Land suchen', sorts:['Schnee am Berg','Schnee im Tal','Höhe','Name'],
-    ui:{'t-title':'Schnee Alpen & Pyrenäen','t-lead':'Schneehöhe im Tal und am Berg von 153 Skigebieten, geschätzt auf der genauen Höhe jedes Gebiets und alle 2 Stunden aktualisiert.',
-      't-stations':'Skigebiete','t-max':'Höchstwert am Berg','t-fall':'Neuschnee, 3 T (max.)','f-ALL':'Alle','f-ALPES':'Alpen','f-PYRENEES':'Pyrenäen',
+    countries:{FR:'Frankreich',CH:'Schweiz',AT:'Österreich',IT:'Italien',DE:'Deutschland',SI:'Slowenien',ES:'Spanien',AD:'Andorra',MA:'Marokko',DZ:'Algerien',TR:'Türkei'},
+    ranges:{ALPES:'Alpen',PYRENEES:'Pyrenäen',ATLAS:'Atlas',TURQUIE:'Türkei'}, search:'Skigebiet, Region oder Land suchen', sorts:['Schnee am Berg','Schnee im Tal','Höhe','Name'],
+    ui:{'t-title':'Schnee Alpen & Pyrenäen','t-lead':'Schneehöhe im Tal und am Berg von 168 Skigebieten, geschätzt auf der genauen Höhe jedes Gebiets und alle 2 Stunden aktualisiert.',
+      't-stations':'Skigebiete','t-max':'Höchstwert am Berg','t-fall':'Neuschnee, 3 T (max.)','f-ALL':'Alle','f-ALPES':'Alpen','f-PYRENEES':'Pyrenäen','f-ATLAS':'Atlas','f-TURQUIE':'Türkei',
       't-note':'Schneehöhe für jede Höhe seit Saisonbeginn aus Open-Meteo-Daten simuliert (Lizenz CC BY 4.0), Aktualisierung alle 2 Stunden: Schätzungen, nicht die offiziellen Schneeberichte der Skigebiete. Prüfe vor der Abfahrt immer den Schneebericht des Skigebiets und den Lawinenlagebericht. Höhen der Skigebiete: skiresort.info. Karte © OpenStreetMap-Mitwirkende.',
       't-top-top':'Top 10 · meister Schnee am Berg','t-top-base':'Top 10 · meister Schnee im Tal',
       't-privacy':'Datenschutzerklärung','t-app':'Auch als Android-App erhältlich.'} },
@@ -263,9 +265,9 @@ function render() {
   $('units').setAttribute('aria-pressed', String(US));
 }
 
-['ALL', 'ALPES', 'PYRENEES'].forEach(f => $('f-' + f).addEventListener('click', () => {
+['ALL', 'ALPES', 'PYRENEES', 'ATLAS', 'TURQUIE'].forEach(f => $('f-' + f).addEventListener('click', () => {
   filter = f;
-  ['ALL', 'ALPES', 'PYRENEES'].forEach(x => $('f-' + x).setAttribute('aria-pressed', String(x === f)));
+  ['ALL', 'ALPES', 'PYRENEES', 'ATLAS', 'TURQUIE'].forEach(x => $('f-' + x).setAttribute('aria-pressed', String(x === f)));
   render();
 }));
 $('q').addEventListener('input', render);

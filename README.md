@@ -1,6 +1,6 @@
 # Neige Alpes & Pyrénées — application Android
 
-Liste de 153 stations de ski des Alpes (France, Suisse, Autriche, Italie, Allemagne, Slovénie)
+Liste de 168 stations de ski des Alpes (France, Suisse, Autriche, Italie, Allemagne, Slovénie)
 et des Pyrénées (France, Espagne, Andorre), avec pour chacune la **hauteur de neige en cm**
 à trois altitudes : bas du domaine, milieu et sommet. Également : chutes de neige prévues
 sur 3 jours et température au sommet.

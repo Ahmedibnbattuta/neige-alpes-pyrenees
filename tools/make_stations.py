@@ -4,7 +4,7 @@ import json, sys
 # Pour les grands domaines, « bas » = altitude du village de la station (comme dans les bulletins officiels),
 # et non le point le plus bas du domaine relié : verified=False.
 # verified=False : altitude estimée (station faisant partie d'un grand domaine ou absente de la source)
-A,P="ALPES","PYRENEES"
+A,P,ATL,TUR="ALPES","PYRENEES","ATLAS","TURQUIE"
 S=[
 # --- Alpes françaises ---
 ("chamonix","Chamonix – Grands Montets","FR",A,"Mont-Blanc",45.9800,6.9270,1252,2765,True),
@@ -167,6 +167,25 @@ S=[
 ("arcalis","Ordino Arcalís","AD",P,"Andorre",42.6290,1.4880,1940,2625,True),
 ("palarinsal","Pal Arinsal","AD",P,"Andorre",42.5500,1.4800,1550,2537,True),
 ("grandvalira","Grandvalira","AD",P,"Andorre",42.5420,1.7330,1710,2640,True),
+# --- Atlas (stations) ---
+("oukaimeden","Oukaïmeden","MA",ATL,"Haut Atlas",31.2050,-7.8620,2610,3262,True),
+("michlifen","Michlifen (Ifrane)","MA",ATL,"Moyen Atlas",33.4020,-5.0950,1950,2100,False),
+("chrea","Chréa","DZ",ATL,"Atlas blidéen",36.4260,2.8770,1450,1550,False),
+# --- Atlas (sommets : bas = village ou point de départ, haut = sommet) ---
+("toubkal","Toubkal (sommet)","MA",ATL,"Haut Atlas",31.0597,-7.9158,1740,4167,False),
+("mgoun","Ighil M'Goun (sommet)","MA",ATL,"Haut Atlas",31.5070,-6.4500,1800,4071,False),
+("ayachi","Jbel Ayachi (sommet)","MA",ATL,"Haut Atlas oriental",32.4500,-4.9300,1700,3747,False),
+# --- Turquie (stations) ---
+("uludag","Uludağ","TR",TUR,"Marmara (Bursa)",40.1050,29.1270,1781,2322,True),
+("kartalkaya","Kartalkaya","TR",TUR,"Monts Köroğlu (Bolu)",40.6694,31.7861,1898,2195,True),
+("davraz","Davraz","TR",TUR,"Taurus (Isparta)",37.7690,30.7370,1650,2394,True),
+("erciyes","Erciyes","TR",TUR,"Cappadoce (Kayseri)",38.5419,35.5250,2088,3346,True),
+("palandoken","Palandöken","TR",TUR,"Anatolie orientale (Erzurum)",39.8697,41.2733,2148,3140,True),
+("sarikamis","Sarıkamış","TR",TUR,"Anatolie orientale (Kars)",40.3190,42.5330,2130,2632,True),
+# --- Turquie (sommets) ---
+("ararat","Mont Ararat (sommet)","TR",TUR,"Anatolie orientale (Ağrı)",39.7019,44.2983,2000,5137,False),
+("suphan","Süphan (sommet)","TR",TUR,"Anatolie orientale (Bitlis)",38.9300,42.8300,1800,4058,False),
+("kackar","Kaçkar (sommet)","TR",TUR,"Monts Pontiques (Rize)",40.8350,41.1580,1350,3937,False),
 ]
 ids=[s[0] for s in S]; assert len(ids)==len(set(ids)), "doublon"
 for s in S: assert s[7] < s[8], s

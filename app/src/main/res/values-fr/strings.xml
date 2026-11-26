@@ -12,6 +12,8 @@
     <string name="filter_all">Toutes</string>
     <string name="filter_alps">Alpes</string>
     <string name="filter_pyrenees">Pyrénées</string>
+    <string name="filter_atlas">Atlas</string>
+    <string name="filter_turkey">Turquie</string>
     <string name="filter_favorites">Favoris</string>
     <string name="sort_snow_top">Neige au sommet</string>
     <string name="sort_snow_base">Neige en bas</string>
@@ -20,6 +22,8 @@
 
     <string name="range_alps">Alpes</string>
     <string name="range_pyrenees">Pyrénées</string>
+    <string name="range_atlas">Atlas</string>
+    <string name="range_turkey">Turquie</string>
     <string name="country_fr">France</string>
     <string name="country_ch">Suisse</string>
     <string name="country_at">Autriche</string>
@@ -28,6 +32,9 @@
     <string name="country_si">Slovénie</string>
     <string name="country_es">Espagne</string>
     <string name="country_ad">Andorre</string>
+    <string name="country_ma">Maroc</string>
+    <string name="country_dz">Algérie</string>
+    <string name="country_tr">Turquie</string>
 
     <plurals name="stations_count">
         <item quantity="one">%1$d station</item>
